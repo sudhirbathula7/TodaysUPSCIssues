@@ -34,10 +34,12 @@ def draw_header(
 
     Returns the y-coordinate immediately below the header.
     """
-
-    left = SPACING.page_inner_padding + 8
-    right = page_width - SPACING.page_inner_padding - 8
-    top = page_height - SPACING.page_inner_padding - 8
+    safe_margin = 19.0
+    content_inset = 10.0
+ 
+    left = safe_margin + content_inset
+    right = page_width - safe_margin - content_inset
+    top = page_height - safe_margin - 7.0
 
     logo_width = 34
     logo_height = 34

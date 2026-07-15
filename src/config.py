@@ -6,7 +6,7 @@ Created By : Sudhir
 Configuration File
 ===========================================================
 """
-
+from pathlib import Path
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4, landscape
 import os
@@ -158,9 +158,15 @@ HEADER_SIZE = 9
 # BRAND ASSETS
 # ===========================================================
 
-LOGOS_DIR = ASSETS_DIR / "logos"
+LOGOS_DIR = os.path.join(
+    ASSETS_DIR,
+    "logos",
+)
 
-TODAY_UPSC_LOGO = LOGOS_DIR / "today_upsc_logo.png"
+TODAY_UPSC_LOGO = os.path.join(
+    LOGOS_DIR,
+    "today_upsc_logo.png",
+)
 
 # ===========================================================
 # COLOURS

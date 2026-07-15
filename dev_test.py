@@ -24,8 +24,10 @@ OUTPUT_FILE = (
 
 
 def main() -> None:
-    logo_path = TODAY_UPSC_LOGO if TODAY_UPSC_LOGO.is_file() else None
+    import os
 
+    logo_path = TODAY_UPSC_LOGO if os.path.isfile(TODAY_UPSC_LOGO) else None
+    
     generated_file = generate_preview_pdf(
         output_path=OUTPUT_FILE,
         date_text="15 July 2026",

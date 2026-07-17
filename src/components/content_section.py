@@ -70,8 +70,8 @@ class ContentSection:
 # ==========================================================
 
 HEADING_FONT_NAME = BOLD_FONT
-HEADING_FONT_SIZE = 9.3
-HEADING_LEADING = 10.8
+HEADING_FONT_SIZE = 9.8
+HEADING_LEADING = 11
 
 BODY_FONT_NAME = FONTS.body.name
 BODY_FONT_SIZE = 9.5

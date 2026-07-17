@@ -40,6 +40,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 
 # Import project modules only after PROJECT_ROOT is added.
+from src.components.takeaway import draw_takeaway
+from src.components.quick_facts import draw_quick_facts
 from src.components.content_section import draw_content_sections  # noqa: E402
 from src.components.recall_questions import draw_recall_questions  # noqa: E402
 from src.components.issue_header import draw_issue_header
@@ -248,7 +250,7 @@ def draw_issue_boxes(
     pdf=pdf,
     box=issue.content,
     sections=content_sections,
-    ) 
+    )
 
     if issue_number == 1:
      recall_questions = (
@@ -261,25 +263,75 @@ def draw_issue_boxes(
         "What limits the effectiveness of committee oversight in India?",
     )
 
-     draw_recall_questions(
+    draw_recall_questions(
     pdf=pdf,
     box=issue.recall,
     questions=recall_questions,
+    )
+
+    if issue_number == 1:
+
+        quick_facts = [
+
+        "CERT-In is India's national cyber incident response agency.",
+
+        "Kudankulam is India's largest nuclear power project.",
+
+        "Ransomware attacks may involve both encryption and data theft.",
+
+        "Supply-chain attacks often target contractors instead of core systems.",
+
+        "Critical infrastructure follows layered cyber-security architecture.",
+
+
+        ]
+
+    else:
+
+        quick_facts = [
+
+        "Department-related Standing Committees examine Bills in detail.",
+
+        "Committee recommendations are advisory in nature.",
+
+        "Parliamentary Committees improve legislative scrutiny.",
+
+        "Committee reports strengthen executive accountability.",
+
+        "Both Lok Sabha and Rajya Sabha have Standing Committees.",
+
+    ]
+
+
+    draw_quick_facts(
+    pdf=pdf,
+    box=issue.quick_facts,
+    facts=quick_facts,
+    )
+
+    if issue_number == 1:
+
+        takeaway = (
+        "Cybersecurity for critical infrastructure must extend "
+        "beyond reactors to <b>vendors</b>, <b>contractors</b> "
+        "and digital supply chains through proactive protection "
+        "and transparent incident response."
+         )
+
+    else:
+
+        takeaway = (
+        "Strong Parliamentary Committees improve "
+        "<b>accountability</b>, legislative quality and "
+        "executive oversight, making them essential to a "
+        "healthy parliamentary democracy."
+        )
+
+    draw_takeaway(
+    pdf=pdf,
+    box=issue.takeaway,
+    takeaway=takeaway,
 )
-
-    draw_box(
-        pdf,
-        issue.quick_facts,
-        "QUICK FACTS",
-        line_width=0.8,
-    )
-
-    draw_box(
-        pdf,
-        issue.takeaway,
-        "KEY TAKEAWAY",
-        line_width=0.8,
-    )
 
 # ===========================================================
 # PDF GENERATION

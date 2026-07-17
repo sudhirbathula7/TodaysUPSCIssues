@@ -5,14 +5,20 @@ Issue Header Component
 Created by Sudhir
 ============================================================
 
-Draws:
+Internal grid:
 
-- Issue number inside a small rounded box
-- One-line or two-line issue title
-- GS badge on the right
-- Topic/category aligned below the GS badge
+- Left column   : Issue number
+- Centre column : Issue title
+- Right column  : GS badge and subject/category
 
-The component draws inside the Rectangle supplied by layout.py.
+Alignment rules:
+
+- Number box is vertically centred.
+- One-line titles are vertically centred.
+- Two-line titles are centred around the middle line.
+- GS badge and category form one vertically centred group.
+- GS/category group is aligned near the right edge.
+- Number and GS boxes remain white and printer-friendly.
 ============================================================
 """
 
@@ -33,40 +39,42 @@ from src.styles import BOLD_FONT, COLOURS, FONTS
 # ==========================================================
 
 NUMBER_FONT_NAME = BOLD_FONT
-NUMBER_FONT_SIZE = 10.0
+NUMBER_FONT_SIZE = 11.0
 
 TITLE_FONT_NAME = BOLD_FONT
-TITLE_FONT_SIZE = 12.2
-TITLE_LEADING = 14.0
+TITLE_FONT_SIZE = 12.8
+TITLE_LEADING = 14.4
 
 MIN_TITLE_FONT_SIZE = 10.0
 MIN_TITLE_LEADING = 11.8
 
 GS_FONT_NAME = BOLD_FONT
-GS_FONT_SIZE = 7.8
+GS_FONT_SIZE = 8.0
 
 CATEGORY_FONT_NAME = FONTS.issue_meta.name
-CATEGORY_FONT_SIZE = 6.9
-CATEGORY_LEADING = 8.0
+CATEGORY_FONT_SIZE = 7.3
+CATEGORY_LEADING = 8.4
 
 
 # ==========================================================
-# GEOMETRY SETTINGS
+# GRID AND GEOMETRY
 # ==========================================================
 
 HORIZONTAL_PADDING = 8.0
 VERTICAL_PADDING = 5.0
 
+# Left column
 NUMBER_BOX_WIDTH = 22.0
 NUMBER_BOX_HEIGHT = 22.0
 NUMBER_BOX_RADIUS = 5.0
+NUMBER_TITLE_GAP = 10.0
 
-NUMBER_TITLE_GAP = 7.0
+# Right column
+RIGHT_AREA_WIDTH = 70.0
+RIGHT_EDGE_PADDING = 8.0
+TITLE_RIGHT_GAP = 8.0
 
-RIGHT_AREA_WIDTH = 60.0
-TITLE_RIGHT_GAP = 7.0
-
-BADGE_HORIZONTAL_PADDING = 7.0
+BADGE_HORIZONTAL_PADDING = 9.0
 BADGE_VERTICAL_PADDING = 3.0
 BADGE_RADIUS = 3.0
 
@@ -74,7 +82,7 @@ CATEGORY_TOP_GAP = 3.0
 
 
 # ==========================================================
-# TITLE FITTING
+# TITLE PARAGRAPH
 # ==========================================================
 
 def _build_title_paragraph(
@@ -83,8 +91,8 @@ def _build_title_paragraph(
     height: float,
 ) -> tuple[Paragraph, float, float]:
     """
-    Build a title paragraph that fits within a maximum of
-    two lines.
+    Build a title that uses one line when possible and a
+    maximum of two lines when necessary.
     """
 
     font_size = TITLE_FONT_SIZE
@@ -93,7 +101,7 @@ def _build_title_paragraph(
     while font_size >= MIN_TITLE_FONT_SIZE:
 
         style = ParagraphStyle(
-            name="issue_header_title",
+            name=f"issue_title_{font_size:.1f}",
             fontName=TITLE_FONT_NAME,
             fontSize=font_size,
             leading=leading,
@@ -102,6 +110,8 @@ def _build_title_paragraph(
             spaceBefore=0,
             spaceAfter=0,
             splitLongWords=False,
+            allowWidows=0,
+            allowOrphans=0,
         )
 
         paragraph = Paragraph(
@@ -114,9 +124,14 @@ def _build_title_paragraph(
             height,
         )
 
+        maximum_two_line_height = (
+            leading * 2
+            + 0.5
+        )
+
         if (
             wrapped_height <= height
-            and wrapped_height <= (leading * 2 + 0.5)
+            and wrapped_height <= maximum_two_line_height
         ):
             return (
                 paragraph,
@@ -130,8 +145,8 @@ def _build_title_paragraph(
             leading - 0.2,
         )
 
-    style = ParagraphStyle(
-        name="issue_header_title_minimum",
+    minimum_style = ParagraphStyle(
+        name="issue_title_minimum",
         fontName=TITLE_FONT_NAME,
         fontSize=MIN_TITLE_FONT_SIZE,
         leading=MIN_TITLE_LEADING,
@@ -140,11 +155,13 @@ def _build_title_paragraph(
         spaceBefore=0,
         spaceAfter=0,
         splitLongWords=False,
+        allowWidows=0,
+        allowOrphans=0,
     )
 
     paragraph = Paragraph(
         escape(title),
-        style,
+        minimum_style,
     )
 
     wrapped_width, wrapped_height = paragraph.wrap(
@@ -152,7 +169,49 @@ def _build_title_paragraph(
         height,
     )
 
-    return paragraph, wrapped_width, wrapped_height
+    return (
+        paragraph,
+        wrapped_width,
+        wrapped_height,
+    )
+
+
+# ==========================================================
+# CATEGORY PARAGRAPH
+# ==========================================================
+
+def _build_category_paragraph(
+    category: str,
+    width: float,
+    height: float,
+) -> tuple[Paragraph, float]:
+    """
+    Build the subject/category paragraph beneath the GS badge.
+    """
+
+    style = ParagraphStyle(
+        name="issue_category",
+        fontName=CATEGORY_FONT_NAME,
+        fontSize=CATEGORY_FONT_SIZE,
+        leading=CATEGORY_LEADING,
+        textColor=COLOURS.muted_text,
+        alignment=TA_LEFT,
+        spaceBefore=0,
+        spaceAfter=0,
+        splitLongWords=False,
+    )
+
+    paragraph = Paragraph(
+        escape(category),
+        style,
+    )
+
+    _, paragraph_height = paragraph.wrap(
+        width,
+        height,
+    )
+
+    return paragraph, paragraph_height
 
 
 # ==========================================================
@@ -168,7 +227,7 @@ def draw_issue_header(
     category: str,
 ) -> None:
     """
-    Draw one compact issue header.
+    Draw one issue header using the three-column grid.
     """
 
     if issue_number < 1:
@@ -191,7 +250,7 @@ def draw_issue_header(
     category = (category or "").strip()
 
     # ------------------------------------------------------
-    # OUTER BOX
+    # OUTER HEADER BOX
     # ------------------------------------------------------
 
     draw_rounded_box(
@@ -206,23 +265,37 @@ def draw_issue_header(
     )
 
     # ------------------------------------------------------
-    # INTERNAL GEOMETRY
+    # THREE-COLUMN GRID
     # ------------------------------------------------------
 
-    left_x = box.x + HORIZONTAL_PADDING
-    right_x = box.right - HORIZONTAL_PADDING
+    left_edge = (
+        box.x
+        + HORIZONTAL_PADDING
+    )
 
-    number_box_x = left_x
-    number_box_y = box.center_y - (NUMBER_BOX_HEIGHT / 2)
+    right_edge = (
+        box.right
+        - RIGHT_EDGE_PADDING
+    )
 
+    # Left column: issue number
+    number_box_x = left_edge
+
+    number_box_y = (
+        box.center_y
+        - (NUMBER_BOX_HEIGHT / 2)
+    )
+
+    # Centre column: title
     title_x = (
         number_box_x
         + NUMBER_BOX_WIDTH
         + NUMBER_TITLE_GAP
     )
 
+    # Right column: GS and category
     right_area_x = (
-        right_x
+        right_edge
         - RIGHT_AREA_WIDTH
     )
 
@@ -237,8 +310,13 @@ def draw_issue_header(
         - (2 * VERTICAL_PADDING)
     )
 
+    if title_width <= 0:
+        raise ValueError(
+            "Issue-header title area is too narrow."
+        )
+
     # ------------------------------------------------------
-    # TITLE
+    # TITLE POSITION
     # ------------------------------------------------------
 
     (
@@ -251,6 +329,8 @@ def draw_issue_header(
         height=title_height,
     )
 
+    # A one-line title is centred on the middle line.
+    # A two-line title extends equally above and below it.
     title_y = (
         box.center_y
         - (title_wrapped_height / 2)
@@ -276,39 +356,55 @@ def draw_issue_header(
         + (2 * BADGE_VERTICAL_PADDING)
     )
 
-    badge_x = right_area_x + 6
-    badge_y = box.center_y + 2.5
+    # Push the badge group toward the right border.
+    badge_x = (
+        right_edge
+        - badge_width -6
+    )
 
     # ------------------------------------------------------
     # CATEGORY
     # ------------------------------------------------------
 
-    category_style = ParagraphStyle(
-        name="issue_category",
-        fontName=CATEGORY_FONT_NAME,
-        fontSize=CATEGORY_FONT_SIZE,
-        leading=CATEGORY_LEADING,
-        textColor=COLOURS.muted_text,
-        alignment=TA_LEFT,
-        spaceBefore=0,
-        spaceAfter=0,
-        splitLongWords=False,
+    if category:
+        (
+            category_paragraph,
+            category_height,
+        ) = _build_category_paragraph(
+            category=category,
+            width=RIGHT_AREA_WIDTH,
+            height=box.height,
+        )
+    else:
+        category_paragraph = None
+        category_height = 0.0
+
+    # Treat the badge and category as one centred group.
+    right_group_height = (
+        badge_height
+        + (
+            CATEGORY_TOP_GAP
+            if category
+            else 0.0
+        )
+        + category_height
     )
 
-    category_paragraph = Paragraph(
-        escape(category),
-        category_style,
+    right_group_bottom = (
+        box.center_y
+        - (right_group_height / 2)
     )
 
-    _, category_height = category_paragraph.wrap(
-        RIGHT_AREA_WIDTH,
-        box.height,
-    )
+    category_y = right_group_bottom
 
-    category_y = (
-        badge_y
-        - CATEGORY_TOP_GAP
-        - category_height
+    badge_y = (
+        category_y
+        + category_height
+        + (
+            CATEGORY_TOP_GAP
+            if category
+            else 0.0
+        )
     )
 
     # ------------------------------------------------------
@@ -318,10 +414,13 @@ def draw_issue_header(
     pdf.saveState()
 
     try:
-        # Number box
-        pdf.setFillColor(COLOURS.box_background
+        # ----------------------------------------------
+        # NUMBER BOX
+        # ----------------------------------------------
+
+        pdf.setFillColor(
+            COLOURS.box_background
         )
-        
 
         pdf.setStrokeColor(
             COLOURS.border
@@ -346,21 +445,36 @@ def draw_issue_header(
             NUMBER_FONT_SIZE,
         )
 
+        number_baseline_y = (
+            number_box_y
+            + (NUMBER_BOX_HEIGHT / 2)
+            - (NUMBER_FONT_SIZE * 0.34)
+        )
+
         pdf.drawCentredString(
-            number_box_x + (NUMBER_BOX_WIDTH / 2),
-            number_box_y + 6.2,
+            number_box_x
+            + (NUMBER_BOX_WIDTH / 2),
+            number_baseline_y,
             str(issue_number),
         )
 
-        # Title
+        # ----------------------------------------------
+        # ISSUE TITLE
+        # ----------------------------------------------
+
         title_paragraph.drawOn(
             pdf,
             title_x,
             title_y,
         )
 
-        # GS badge
-        pdf.setFillColor(COLOURS.box_background)
+        # ----------------------------------------------
+        # GS BADGE
+        # ----------------------------------------------
+
+        pdf.setFillColor(
+            COLOURS.box_background
+        )
 
         pdf.setStrokeColor(
             COLOURS.border
@@ -385,14 +499,24 @@ def draw_issue_header(
             GS_FONT_SIZE,
         )
 
+        gs_baseline_y = (
+            badge_y
+            + (badge_height / 2)
+            - (GS_FONT_SIZE * 0.34)
+        )
+
         pdf.drawCentredString(
-            badge_x + (badge_width / 2),
-            badge_y + BADGE_VERTICAL_PADDING,
+            badge_x
+            + (badge_width / 2),
+            gs_baseline_y,
             gs_paper,
         )
 
-        # Category aligned to GS badge left edge
-        if category:
+        # ----------------------------------------------
+        # SUBJECT / CATEGORY
+        # ----------------------------------------------
+
+        if category_paragraph is not None:
             category_paragraph.drawOn(
                 pdf,
                 badge_x,
@@ -409,10 +533,12 @@ def draw_issue_header(
 
 if __name__ == "__main__":
 
-    print("=" * 60)
-    print("TODAY'S UPSC ISSUES — ISSUE HEADER")
-    print("=" * 60)
-    print("✓ Rounded issue-number box enabled")
-    print("✓ Category aligned below GS badge")
+    print("=" * 64)
+    print("TODAY'S UPSC ISSUES — ISSUE HEADER COMPONENT")
+    print("=" * 64)
+    print("✓ Three-column grid enabled")
+    print("✓ Number box vertically centred")
     print("✓ One-line and two-line titles supported")
-    print("=" * 60)
+    print("✓ GS and category group aligned to the right")
+    print("✓ White printer-friendly badges")
+    print("=" * 64)

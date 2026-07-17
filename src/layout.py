@@ -101,8 +101,8 @@ HEADER_BADGE_RATIO = 0.25
 # ===========================================================
 
 RECALL_RATIO = 0.25
-QUICK_FACTS_RATIO = 0.50
-TAKEAWAY_RATIO = 0.25
+QUICK_FACTS_RATIO = 0.45
+TAKEAWAY_RATIO = 0.30
 
 
 # ===========================================================

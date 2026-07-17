@@ -92,14 +92,20 @@ def draw_page_border(
     canvas,
     page_width: float,
     page_height: float,
-    margin: float = 19.0,
+    margin: float | None = None,
 ) -> None:
     """
-    Draw the outer printable page border.
+    Draw the outer page border.
 
-    The larger margin protects content during printing,
-    trimming and binding.
+    When margin is not supplied, the standard page padding
+    from the style system is used.
     """
+
+    margin = (
+        SPACING.page_inner_padding
+        if margin is None
+        else margin
+    )
 
     canvas.saveState()
     canvas.setStrokeColor(COLOURS.border)

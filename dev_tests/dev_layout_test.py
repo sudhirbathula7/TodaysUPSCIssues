@@ -6,19 +6,16 @@ Version : 1.0
 Created By : Sudhir
 ===========================================================
 
-This file generates a temporary PDF showing only the page
-layout and individual component boxes.
+This file generates a temporary PDF showing:
 
-It is used to visually inspect:
-
-- Page header
+- Real page header
 - Two equal issue areas
 - Compact issue header box
 - Six-content-points box
 - Recall questions box
 - Quick facts box
 - Key takeaway box
-- Page footer
+- Temporary footer placeholder
 
 The generated PDF opens automatically on Windows.
 ===========================================================
@@ -42,8 +39,14 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
-# Import only after the project root is available to Python.
+# Import project modules only after PROJECT_ROOT is added.
+from src.components.content_section import draw_content_sections  # noqa: E402
+from src.components.recall_questions import draw_recall_questions  # noqa: E402
+from src.components.issue_header import draw_issue_header
+from src.components.footer import draw_footer  # noqa: E402
+from src.components.header import draw_header  # noqa: E402
 from src.layout import (  # noqa: E402
+    BOX_RADIUS,
     PAGE_HEIGHT,
     PAGE_WIDTH,
     IssueLayout,
@@ -85,7 +88,7 @@ def draw_box(
     dashed: bool = False,
 ) -> None:
     """
-    Draw one temporary layout box with a label.
+    Draw one temporary rounded layout box with a label.
     """
 
     pdf.saveState()
@@ -96,11 +99,12 @@ def draw_box(
     if dashed:
         pdf.setDash(3, 2)
 
-    pdf.rect(
+    pdf.roundRect(
         box.x,
         box.y,
         box.width,
         box.height,
+        BOX_RADIUS,
         stroke=1,
         fill=0,
     )
@@ -109,12 +113,9 @@ def draw_box(
     pdf.setFillColor(LABEL_COLOUR)
     pdf.setFont("Helvetica-Bold", label_size)
 
-    label_x = box.x + 4
-    label_y = box.y + box.height - 10
-
     pdf.drawString(
-        label_x,
-        label_y,
+        box.x + 4,
+        box.y + box.height - 10,
         label,
     )
 
@@ -127,10 +128,10 @@ def draw_issue_area_guide(
     issue_number: int,
 ) -> None:
     """
-    Draw the complete issue area as a light dashed guide.
+    Draw a light dashed guide around the complete issue area.
 
-    This is only a development reference. The production PDF
-    will not draw this outer guide.
+    This guide is for development only and will not appear
+    in the production PDF.
     """
 
     draw_box(
@@ -150,7 +151,7 @@ def draw_issue_boxes(
     issue_number: int,
 ) -> None:
     """
-    Draw all five independent boxes of one issue.
+    Draw all five component boxes for one issue.
     """
 
     draw_issue_area_guide(
@@ -159,26 +160,112 @@ def draw_issue_boxes(
         issue_number,
     )
 
-    draw_box(
-        pdf,
-        issue.header,
-        f"ISSUE {issue_number} HEADER",
-        line_width=0.8,
+    # ---------------------------------------------
+    # Sample data for development testing
+    # ---------------------------------------------
+
+    if issue_number == 1:
+        title = "Urban Flood Governance"
+        gs_paper = "GS III"
+        category = "Governance"
+
+    else:
+        title = (
+            "Strengthening Parliamentary Committee "
+            "Scrutiny for Better Governance"
+        )
+        gs_paper = "GS II"
+        category = "Polity"
+
+    draw_issue_header(
+        pdf=pdf,
+        box=issue.header,
+        issue_number=issue_number,
+        title=title,
+        gs_paper=gs_paper,
+        category=category,
     )
 
-    draw_box(
-        pdf,
-        issue.content,
-        "SIX CONTENT POINTS",
-        line_width=0.8,
+    if issue_number == 1:
+     content_sections = [
+        (
+            "Core Issue",
+            "Critical infrastructure cybersecurity must protect not only core systems, "
+            "but also <b>contractors</b>, <b>vendors</b>, cloud services and connected supply chains.",
+        ),
+        (
+            "What's Happening?",
+            "A ransomware group reportedly leaked files linked to a contractor working on "
+            "the Kudankulam nuclear power project, although the operational reactor network "
+            "was stated to be unaffected.",
+        ),
+        (
+            "Why It Matters",
+            "Cyber incidents involving nuclear infrastructure can affect <b>national security</b>, "
+            "public confidence, institutional credibility and the safety of strategic assets.",
+        ),
+        (
+            "Key Challenges",
+            "Delayed breach disclosure, weak incident response, poor vendor security, limited "
+            "coordination and treating cybersecurity mainly as a compliance exercise reduce preparedness.",
+        ),
+        (
+            "The Way Forward",
+            "India needs stronger supply-chain security standards, timely disclosure, regular audits, "
+            "better cyber hygiene and coordinated action by CERT-In, operators and private partners.",
+        ),
+    ]
+    else:
+     content_sections = [
+        (
+            "Core Issue",
+            "Parliamentary committees improve legislative scrutiny by examining bills, budgets, "
+            "ministries and public policies in greater detail than is possible during full House debates.",
+        ),
+        (
+            "What's Happening?",
+            "Concerns continue over weak committee referrals, limited discussion time and reduced "
+            "institutional scrutiny of important legislation.",
+        ),
+        (
+            "Why It Matters",
+            "Strong committee oversight improves <b>accountability</b>, evidence-based lawmaking, "
+            "executive control and the quality of parliamentary democracy.",
+        ),
+        (
+            "Key Challenges",
+            "Non-binding recommendations, limited research support, inconsistent referrals and "
+            "political majorities can weaken committee effectiveness.",
+        ),
+        (
+            "The Way Forward",
+            "Important bills should receive regular committee scrutiny, research support must improve, "
+            "and governments should provide reasoned responses to committee recommendations.",
+        ),
+    ]
+
+    draw_content_sections(
+    pdf=pdf,
+    box=issue.content,
+    sections=content_sections,
+    ) 
+
+    if issue_number == 1:
+     recall_questions = (
+        "Why do Indian cities continue to face severe urban flooding?",
+        "What governance reforms can improve urban flood resilience?",
+    )
+    else:
+     recall_questions = (
+        "Why are parliamentary committees important for legislative scrutiny?",
+        "What limits the effectiveness of committee oversight in India?",
     )
 
-    draw_box(
-        pdf,
-        issue.recall,
-        "RECALL QUESTIONS",
-        line_width=0.8,
-    )
+     draw_recall_questions(
+    pdf=pdf,
+    box=issue.recall,
+    questions=recall_questions,
+)
 
     draw_box(
         pdf,
@@ -194,14 +281,13 @@ def draw_issue_boxes(
         line_width=0.8,
     )
 
-
 # ===========================================================
 # PDF GENERATION
 # ===========================================================
 
 def create_test_pdf() -> Path:
     """
-    Generate the portrait layout skeleton PDF.
+    Generate the portrait layout test PDF.
     """
 
     OUTPUT_DIR.mkdir(
@@ -235,7 +321,7 @@ def create_test_pdf() -> Path:
         fill=1,
     )
 
-    # Optional page-edge guide
+    # Optional page-edge development guide
     page_guide = Rectangle(
         x=0.5,
         y=0.5,
@@ -252,34 +338,34 @@ def create_test_pdf() -> Path:
         label_size=5.8,
     )
 
-    # Header
-    draw_box(
-        pdf,
-        layout.header,
-        "PAGE HEADER",
-        line_width=1.0,
+    # Real header component
+    draw_header(
+        pdf=pdf,
+        box=layout.header,
+        date_text="17 July 2026",
     )
 
-    # Issue 1
+    # Issue 1 placeholders
     draw_issue_boxes(
         pdf,
         layout.issue1,
         1,
     )
 
-    # Issue 2
+    # Issue 2 placeholders
     draw_issue_boxes(
         pdf,
         layout.issue2,
         2,
     )
 
-    # Footer
-    draw_box(
-        pdf,
-        layout.footer,
-        "PAGE FOOTER",
-        line_width=1.0,
+    # Temporary footer placeholder
+    draw_footer(
+    pdf=pdf,
+    box=layout.footer,
+    document_code="#TUI-260717",
+    page_number=1,
+    total_pages=2,
     )
 
     pdf.showPage()
@@ -294,15 +380,17 @@ def create_test_pdf() -> Path:
 
 def open_generated_pdf(pdf_path: Path) -> None:
     """
-    Open the generated PDF using the Windows default viewer.
+    Open the generated PDF with the Windows default viewer.
     """
 
     try:
         os.startfile(str(pdf_path))
+
     except AttributeError:
         print(
             "Automatic opening is available on Windows only."
         )
+
     except OSError as error:
         print(
             "PDF generated successfully, but it could not "
@@ -316,7 +404,7 @@ def open_generated_pdf(pdf_path: Path) -> None:
 
 def main() -> None:
     """
-    Generate and automatically open the layout test PDF.
+    Generate and automatically open the test PDF.
     """
 
     try:
@@ -333,7 +421,7 @@ def main() -> None:
     print("=" * 70)
     print("TODAY'S UPSC ISSUES - PORTRAIT LAYOUT TEST")
     print("=" * 70)
-    print(f"PDF generated successfully:")
+    print("PDF generated successfully:")
     print(generated_file.resolve())
     print("-" * 70)
     print("The PDF will now open automatically.")

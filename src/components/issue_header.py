@@ -1,60 +1,385 @@
+"""
+============================================================
+UPSC Issues by Kumar
+Issue Header Component
+Created by Sudhir
+============================================================
+"""
+
 from xml.sax.saxutils import escape
+
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Paragraph
+
 from src.components.helpers import draw_horizontal_line
 from src.layout import Rectangle
 from src.styles import BOLD_FONT, COLOURS, FONTS
 
-def _title(title, width, height):
-    size, leading = 12.8, 14.4
-    while size >= 10.0:
-        style = ParagraphStyle("issue_title", fontName=BOLD_FONT, fontSize=size, leading=leading,
-                               textColor=COLOURS.text, alignment=TA_LEFT, spaceBefore=0, spaceAfter=0,
-                               splitLongWords=False)
-        p = Paragraph(escape(title), style)
-        _, h = p.wrap(width, height)
-        if h <= height and h <= leading * 2 + 0.5:
-            return p, h
-        size -= 0.2
-        leading = max(11.8, leading - 0.2)
-    return p, h
 
-def draw_issue_header(pdf, box: Rectangle, issue_number: int, title: str, gs_paper: str, category: str) -> None:
-    left = box.x + 8.0
-    right = box.right - 16.0
-    number_area = 22.0
-    title_x = left + number_area + 10.0
-    right_area_x = right - 70.0
-    title_width = right_area_x - 8.0 - title_x
-    title_height = box.height - 10.0
+# ==========================================================
+# FONT SETTINGS
+# ==========================================================
 
-    p, h = _title(title.strip(), title_width, title_height)
-    title_y = box.center_y - h / 2
-    number_y = box.center_y - (12.0 * 0.34)
+ISSUE_NUMBER_FONT_SIZE = 14.0
 
-    group_height = 8.0 + (3.0 + 8.4 if category else 0)
-    group_bottom = box.center_y - group_height / 2
-    cat_y = group_bottom
-    gs_y = cat_y + (8.4 + 3.0 if category else 0)
+TITLE_FONT_SIZE = 12.8
+TITLE_MIN_FONT_SIZE = 10.0
+TITLE_LEADING = 14.4
+TITLE_MIN_LEADING = 11.8
+
+GS_FONT_SIZE = 8.0
+CATEGORY_FONT_SIZE = 7.3
+
+
+# ==========================================================
+# GEOMETRY
+# ==========================================================
+
+LEFT_PADDING = 7.0
+RIGHT_PADDING = 10.0
+
+NUMBER_AREA_WIDTH = 22.0
+NUMBER_TITLE_GAP = 10.0
+
+META_AREA_WIDTH = 62.0
+TITLE_META_GAP = 8.0
+
+VERTICAL_PADDING = 5.0
+
+META_LINE_GAP = 2.0
+DIVIDER_WIDTH = 0.45
+
+
+# ==========================================================
+# TITLE FITTING
+# ==========================================================
+
+def _build_title(
+    title: str,
+    available_width: float,
+    available_height: float,
+) -> tuple[Paragraph, float]:
+    """
+    Create a title paragraph that fits inside two lines.
+    """
+
+    font_size = TITLE_FONT_SIZE
+    leading = TITLE_LEADING
+
+    paragraph = None
+    paragraph_height = 0.0
+
+    while font_size >= TITLE_MIN_FONT_SIZE:
+        style = ParagraphStyle(
+            name=f"issue_title_{font_size:.1f}",
+            fontName=BOLD_FONT,
+            fontSize=font_size,
+            leading=leading,
+            textColor=COLOURS.text,
+            alignment=TA_LEFT,
+            spaceBefore=0,
+            spaceAfter=0,
+            splitLongWords=False,
+            allowWidows=0,
+            allowOrphans=0,
+        )
+
+        paragraph = Paragraph(
+            escape(title),
+            style,
+        )
+
+        _, paragraph_height = paragraph.wrap(
+            available_width,
+            available_height,
+        )
+
+        maximum_two_line_height = (
+            leading * 2
+            + 0.5
+        )
+
+        if (
+            paragraph_height <= available_height
+            and paragraph_height <= maximum_two_line_height
+        ):
+            return paragraph, paragraph_height
+
+        font_size -= 0.2
+        leading = max(
+            TITLE_MIN_LEADING,
+            leading - 0.2,
+        )
+
+    if paragraph is None:
+        raise ValueError(
+            "Unable to create issue title paragraph."
+        )
+
+    return paragraph, paragraph_height
+
+
+# ==========================================================
+# MAJOR TOPIC
+# ==========================================================
+
+def _major_topic_lines(
+    category: str,
+) -> list[str]:
+    """
+    Keep only the first major topic before '|'.
+
+    Examples:
+        Disaster Management | Urban Governance
+            -> ["Disaster", "Management"]
+
+        Polity | Parliament
+            -> ["Polity"]
+    """
+
+    if not category:
+        return []
+
+    major_topic = (
+        category
+        .split("|", maxsplit=1)[0]
+        .strip()
+    )
+
+    if not major_topic:
+        return []
+
+    return [
+        word
+        for word in major_topic.split()
+        if word
+    ]
+
+
+# ==========================================================
+# DRAW ISSUE HEADER
+# ==========================================================
+
+def draw_issue_header(
+    pdf,
+    box: Rectangle,
+    issue_number: int,
+    title: str,
+    gs_paper: str,
+    category: str = "",
+    rating: str = "",
+) -> None:
+    """
+    Draw one issue header.
+
+    Left:
+        Issue number
+
+    Centre:
+        Issue title
+
+    Right, centred:
+        GS paper
+        First major subject only
+        One subject word per line
+
+    The rating argument is accepted for compatibility with the
+    PDF generator but is intentionally not displayed.
+    """
+
+    if pdf is None:
+        raise ValueError(
+            "Issue header PDF canvas cannot be None."
+        )
+
+    if box is None:
+        raise ValueError(
+            "Issue header box cannot be None."
+        )
+
+    if issue_number < 1:
+        raise ValueError(
+            "Issue number must be at least 1."
+        )
+
+    if not title or not title.strip():
+        raise ValueError(
+            "Issue title cannot be empty."
+        )
+
+    if not gs_paper or not gs_paper.strip():
+        raise ValueError(
+            "Issue GS paper cannot be empty."
+        )
+
+    title = title.strip()
+    gs_paper = gs_paper.strip()
+    category = category.strip()
+
+    left_edge = (
+        box.x
+        + LEFT_PADDING
+    )
+
+    right_edge = (
+        box.right
+        - RIGHT_PADDING
+    )
+
+    title_x = (
+        left_edge
+        + NUMBER_AREA_WIDTH
+        + NUMBER_TITLE_GAP
+    )
+
+    meta_area_x = (
+        right_edge
+        - META_AREA_WIDTH
+    )
+
+    meta_center_x = (
+        meta_area_x
+        + (META_AREA_WIDTH / 2)
+    )
+
+    title_width = (
+        meta_area_x
+        - TITLE_META_GAP
+        - title_x
+    )
+
+    title_height = (
+        box.height
+        - (VERTICAL_PADDING * 2)
+    )
+
+    if title_width <= 0:
+        raise ValueError(
+            "Issue header title area has no available width."
+        )
+
+    title_paragraph, title_paragraph_height = _build_title(
+        title=title,
+        available_width=title_width,
+        available_height=title_height,
+    )
+
+    title_y = (
+        box.center_y
+        - (title_paragraph_height / 2)
+    )
+
+    issue_number_y = (
+        box.center_y
+        - (ISSUE_NUMBER_FONT_SIZE * 0.34)
+    )
+
+    topic_lines = _major_topic_lines(
+        category
+    )
+
+    meta_rows: list[
+        tuple[str, str, float, object]
+    ] = [
+        (
+            gs_paper,
+            BOLD_FONT,
+            GS_FONT_SIZE,
+            COLOURS.primary,
+        )
+    ]
+
+    for topic_line in topic_lines:
+        meta_rows.append(
+            (
+                topic_line,
+                FONTS.issue_meta.name,
+                CATEGORY_FONT_SIZE,
+                COLOURS.muted_text,
+            )
+        )
+
+    meta_total_height = sum(
+        font_size * 0.76
+        for _, _, font_size, _ in meta_rows
+    )
+
+    if len(meta_rows) > 1:
+        meta_total_height += (
+            META_LINE_GAP
+            * (len(meta_rows) - 1)
+        )
+
+    current_meta_y = (
+        box.center_y
+        + (meta_total_height / 2)
+    )
 
     pdf.saveState()
+
     try:
-        pdf.setFillColor(COLOURS.primary)
-        pdf.setFont(BOLD_FONT, 12.0)
-        pdf.drawCentredString(left + number_area / 2, number_y, str(issue_number))
+        # Issue number
+        pdf.setFillColor(
+            COLOURS.primary
+        )
 
-        p.drawOn(pdf, title_x, title_y)
+        pdf.setFont(
+            BOLD_FONT,
+            ISSUE_NUMBER_FONT_SIZE,
+        )
 
-        pdf.setFillColor(COLOURS.primary)
-        pdf.setFont(BOLD_FONT, 8.0)
-        pdf.drawRightString(right, gs_y, gs_paper.strip())
+        pdf.drawCentredString(
+            left_edge
+            + (NUMBER_AREA_WIDTH / 2),
+            issue_number_y,
+            str(issue_number),
+        )
 
-        if category:
-            pdf.setFillColor(COLOURS.muted_text)
-            pdf.setFont(FONTS.issue_meta.name, 7.3)
-            pdf.drawRightString(right, cat_y, category.strip())
+        # Issue title
+        title_paragraph.drawOn(
+            pdf,
+            title_x,
+            title_y,
+        )
+
+        # GS paper and major topic
+        for (
+            text,
+            font_name,
+            font_size,
+            colour,
+        ) in meta_rows:
+            visible_height = (
+                font_size * 0.76
+            )
+
+            current_meta_y -= visible_height
+
+            pdf.setFillColor(
+                colour
+            )
+
+            pdf.setFont(
+                font_name,
+                font_size,
+            )
+
+            pdf.drawCentredString(
+                meta_center_x,
+                current_meta_y,
+                text,
+            )
+
+            current_meta_y -= META_LINE_GAP
+
     finally:
         pdf.restoreState()
 
-    draw_horizontal_line(pdf, box.x, box.y, box.right, thickness=0.45)
+    draw_horizontal_line(
+        canvas=pdf,
+        x1=box.x,
+        y=box.y,
+        x2=box.right,
+        thickness=DIVIDER_WIDTH,
+    )

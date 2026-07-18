@@ -28,19 +28,19 @@ RECALL QUESTION 2:
 How can urban flood governance be improved?
 
 CURRENT CONTEXT:
-Rapid urbanisation, concretisation of natural drainage channels, encroachment of wetlands and inadequate storm-water infrastructure have increased flooding risks in Indian cities. Short-duration extreme rainfall events now overwhelm drainage systems, disrupt transport, damage property and expose weaknesses in municipal planning and disaster preparedness.
+Rapid urbanisation, loss of wetlands, concretisation of drainage channels and inadequate storm-water infrastructure have increased flooding in Indian cities. Extreme rainfall now overwhelms drainage systems, exposing weaknesses in urban planning and disaster preparedness.
 
 WHY IT MATTERS FOR UPSC:
-Urban flooding connects disaster management, climate adaptation, municipal governance, infrastructure planning and environmental conservation. UPSC may examine the institutional, ecological and administrative causes of recurring floods and expect practical solutions involving local bodies, urban planning authorities, disaster-management agencies and citizens.
+Urban flooding links disaster management, climate adaptation, municipal governance and environmental conservation. UPSC frequently examines institutional failures, ecological degradation and practical solutions involving urban local bodies, planning authorities and disaster-management agencies.
 
 CORE CONCEPT:
-Urban flooding occurs when rainfall exceeds the drainage and absorption capacity of a city. Unlike river floods, it is strongly influenced by land-use changes, blocked drains, loss of lakes and wetlands, unplanned construction and weak maintenance of urban infrastructure.
+Urban flooding occurs when rainfall exceeds a city's drainage capacity. Unlike river floods, it is largely driven by blocked drains, wetland loss, unplanned construction, land-use changes and inadequate infrastructure maintenance.
 
 CHALLENGES:
-Major challenges include fragmented institutional responsibility, outdated drainage maps, encroached water bodies, poor solid-waste management, inadequate rainfall forecasting, weak enforcement of building regulations and limited coordination between municipal corporations, development authorities and disaster-management agencies.
+Major challenges include fragmented institutions, outdated drainage maps, encroached water bodies, poor solid-waste management, weak enforcement of building regulations, inadequate forecasting and poor coordination among urban agencies.
 
 WAY FORWARD:
-Cities should protect wetlands and natural drains, update drainage master plans, use flood-risk maps, improve early-warning systems, strengthen municipal capacity and enforce climate-resilient building norms. Local communities must also participate in waste management, reporting blocked drains and protecting neighbourhood water bodies.
+Cities should restore wetlands, modernise drainage plans, strengthen early-warning systems, enforce climate-resilient building norms and improve municipal capacity. Community participation is essential for protecting drains and local water bodies.
 
 QUICK FACTS:
 Urban flooding is usually localised and develops quickly. Wetlands act as natural water-storage systems. Storm-water drains must remain separate from sewage networks. Urban local bodies are primarily responsible for drainage, sanitation and local land-use management.
@@ -90,7 +90,10 @@ WAY FORWARD:
 Important Bills should normally undergo committee scrutiny. Committees need stronger research assistance, sufficient time, regular attendance and systematic follow-up on recommendations. Reports should be made accessible while protecting confidential deliberations where necessary.
 
 QUICK FACTS:
-Department-related standing committees examine ministries and Demands for Grants. Select committees examine specific Bills. The Public Accounts Committee reviews government expenditure using reports of the Comptroller and Auditor General.
+Department-related Standing Committees examine ministries and Demands for Grants.
+Select Committees examine specific Bills before they are passed.
+The Public Accounts Committee examines CAG reports on government expenditure.
+Committee recommendations are advisory but improve legislative scrutiny and accountability.
 
 WHAT UPSC ASKS:
 UPSC may examine the role of committees in executive accountability, legislative quality, financial oversight and strengthening parliamentary democracy.

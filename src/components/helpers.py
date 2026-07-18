@@ -7,7 +7,8 @@ Created by Sudhir
 """
 
 from pathlib import Path
-
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
@@ -160,7 +161,95 @@ def draw_logo(
 
     return True
 
+# ==========================================================
+# SVG ICON
+# ==========================================================
 
+def draw_svg_icon(
+    canvas,
+    filepath: str | Path,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+) -> bool:
+    """
+    Draw an SVG icon inside the requested rectangle while
+    preserving its aspect ratio.
+
+    Returns True when successfully drawn.
+    Returns False when the file is missing or invalid.
+    """
+
+    icon_path = Path(filepath)
+
+    if not icon_path.is_file():
+        return False
+
+    try:
+        drawing = svg2rlg(
+            str(icon_path)
+        )
+
+        if drawing is None:
+            return False
+
+        original_width = float(
+            drawing.width or 1
+        )
+
+        original_height = float(
+            drawing.height or 1
+        )
+
+        scale = min(
+            width / original_width,
+            height / original_height,
+        )
+
+        drawing.scale(
+            scale,
+            scale,
+        )
+
+        rendered_width = (
+            original_width
+            * scale
+        )
+
+        rendered_height = (
+            original_height
+            * scale
+        )
+
+        draw_x = (
+            x
+            + (
+                width
+                - rendered_width
+            ) / 2
+        )
+
+        draw_y = (
+            y
+            + (
+                height
+                - rendered_height
+            ) / 2
+        )
+
+        renderPDF.draw(
+            drawing,
+            canvas,
+            draw_x,
+            draw_y,
+        )
+
+        return True
+
+    except Exception:
+        return False
+    
 # ==========================================================
 # SMALL LABEL
 # ==========================================================

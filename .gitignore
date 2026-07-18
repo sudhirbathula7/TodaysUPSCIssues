@@ -1,24 +1,28 @@
-# Virtual Environment
-.venv/
-
-# Python Cache
+# Python
 __pycache__/
 *.pyc
 *.pyo
 
-# VS Code Settings
+# Virtual Environment
+.venv/
+venv/
+
+# VS Code
 .vscode/
 
-# Temporary Files
-temp/
+# Build
+build/
+dist/
 
-# Generated PDFs
-Published/output/
+# PDFs
+output/
 
-# Generated Datasets
-Daily_Work/generated/
+# Repository Archive
+repository/
 
-# Operating System Files
+# Logs
+*.log
+
+# Windows
 Thumbs.db
 Desktop.ini
-.DS_Store

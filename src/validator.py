@@ -15,7 +15,7 @@ This file does not read files and does not generate PDFs.
 from datetime import datetime
 from typing import Any
 
-from config import (
+from src.config import (
     DATE_FORMAT,
     MIN_ISSUE_RATING,
     SELECTED_ISSUES,
@@ -38,7 +38,10 @@ def create_validation_result() -> dict[str, Any]:
     }
 
 
-def add_error(result: dict[str, Any], message: str) -> None:
+def add_error(
+    result: dict[str, Any],
+    message: str,
+) -> None:
     """
     Adds an error and marks the dataset as invalid.
     """
@@ -47,7 +50,10 @@ def add_error(result: dict[str, Any], message: str) -> None:
     result["errors"].append(message)
 
 
-def add_warning(result: dict[str, Any], message: str) -> None:
+def add_warning(
+    result: dict[str, Any],
+    message: str,
+) -> None:
     """
     Adds a warning without marking the dataset as invalid.
     """
@@ -104,7 +110,10 @@ def parse_rating(value: Any) -> float | None:
         return None
 
     if "/" in rating_text:
-        rating_text = rating_text.split("/", maxsplit=1)[0].strip()
+        rating_text = rating_text.split(
+            "/",
+            maxsplit=1,
+        )[0].strip()
 
     try:
         return float(rating_text)
@@ -138,7 +147,10 @@ def validate_paper(
     paper = dataset.get("paper", "")
 
     if is_blank(paper):
-        add_error(result, "PAPER is missing.")
+        add_error(
+            result,
+            "PAPER is missing.",
+        )
 
 
 def validate_date(
@@ -152,11 +164,17 @@ def validate_date(
     date_value = dataset.get("date", "")
 
     if is_blank(date_value):
-        add_error(result, "DATE is missing.")
+        add_error(
+            result,
+            "DATE is missing.",
+        )
         return
 
     try:
-        datetime.strptime(date_value.strip(), DATE_FORMAT)
+        datetime.strptime(
+            str(date_value).strip(),
+            DATE_FORMAT,
+        )
     except ValueError:
         add_error(
             result,
@@ -176,7 +194,10 @@ def validate_issue_count(
     issues = dataset.get("issues", [])
 
     if not isinstance(issues, list):
-        add_error(result, "ISSUES must be stored as a list.")
+        add_error(
+            result,
+            "ISSUES must be stored as a list.",
+        )
         return
 
     issue_count = len(issues)
@@ -222,7 +243,9 @@ def validate_issue_number(
     Validates the issue number and returns it when valid.
     """
 
-    number = parse_issue_number(issue.get("issue_number"))
+    number = parse_issue_number(
+        issue.get("issue_number")
+    )
 
     if number is None:
         add_error(
@@ -249,7 +272,9 @@ def validate_rating(
     Validates the UPSC relevance rating.
     """
 
-    rating = parse_rating(issue.get("rating"))
+    rating = parse_rating(
+        issue.get("rating")
+    )
 
     if rating is None:
         add_error(
@@ -281,19 +306,29 @@ def validate_recall_questions(
     Confirms that exactly two recall questions are present.
     """
 
-    questions = issue.get("recall_questions", [])
+    questions = issue.get(
+        "recall_questions",
+        [],
+    )
 
-    if not isinstance(questions, list):
+    if not isinstance(
+        questions,
+        list,
+    ):
         add_error(
             result,
-            f"Issue {issue_position}: RECALL QUESTIONS must be a list.",
+            f"Issue {issue_position}: "
+            "RECALL QUESTIONS must be a list.",
         )
         return
 
     valid_questions = [
         question.strip()
         for question in questions
-        if isinstance(question, str) and question.strip()
+        if (
+            isinstance(question, str)
+            and question.strip()
+        )
     ]
 
     if len(valid_questions) != 2:
@@ -316,6 +351,44 @@ def validate_recall_questions(
             )
 
 
+def validate_quick_facts(
+    issue: dict[str, Any],
+    issue_position: int,
+    result: dict[str, Any],
+) -> None:
+    """
+    Confirms that exactly five non-empty Quick Facts are present.
+    """
+
+    facts = issue.get(
+        "quick_facts",
+        [],
+    )
+
+    if not isinstance(
+        facts,
+        list,
+    ):
+        add_error(
+            result,
+            f"Issue {issue_position}: QUICK FACTS must be a list.",
+        )
+        return
+
+    valid_facts = [
+        str(fact).strip()
+        for fact in facts
+        if str(fact).strip()
+    ]
+
+    if len(valid_facts) != 4:
+        add_error(
+            result,
+            f"Issue {issue_position}: Exactly 4 Quick Facts "
+            f"are required. Detected: {len(valid_facts)}.",
+        )
+
+
 def validate_text_length(
     issue: dict[str, Any],
     field_name: str,
@@ -332,12 +405,17 @@ def validate_text_length(
     will also be checked by the PDF engine.
     """
 
-    value = issue.get(field_name, "")
+    value = issue.get(
+        field_name,
+        "",
+    )
 
     if is_blank(value):
         return
 
-    word_count = count_words(str(value))
+    word_count = count_words(
+        str(value)
+    )
 
     if word_count < minimum_words:
         add_warning(
@@ -367,7 +445,10 @@ def validate_issue(
     Validates one complete UPSC issue.
     """
 
-    if not isinstance(issue, dict):
+    if not isinstance(
+        issue,
+        dict,
+    ):
         add_error(
             result,
             f"Issue {issue_position} is not a valid issue object.",
@@ -380,7 +461,7 @@ def validate_issue(
         result,
     )
 
-    required_fields = {
+    required_text_fields = {
         "issue_title": "ISSUE TITLE",
         "gs_paper": "GS PAPER",
         "subject": "SUBJECT",
@@ -389,12 +470,14 @@ def validate_issue(
         "core_concept": "CORE CONCEPT",
         "challenges": "CHALLENGES",
         "way_forward": "WAY FORWARD",
-        "quick_facts": "QUICK FACTS",
         "what_upsc_asks": "WHAT UPSC ASKS",
         "key_takeaway": "KEY TAKEAWAY",
     }
 
-    for field_name, display_name in required_fields.items():
+    for (
+        field_name,
+        display_name,
+    ) in required_text_fields.items():
         validate_required_text_field(
             issue,
             field_name,
@@ -403,22 +486,71 @@ def validate_issue(
             result,
         )
 
-    validate_rating(issue, issue_position, result)
-    validate_recall_questions(issue, issue_position, result)
+    validate_rating(
+        issue,
+        issue_position,
+        result,
+    )
+
+    validate_recall_questions(
+        issue,
+        issue_position,
+        result,
+    )
+
+    validate_quick_facts(
+        issue,
+        issue_position,
+        result,
+    )
 
     preferred_lengths = {
-        "current_context": ("CURRENT CONTEXT", 20, 70),
-        "why_it_matters": ("WHY IT MATTERS FOR UPSC", 20, 70),
-        "core_concept": ("CORE CONCEPT", 20, 90),
-        "challenges": ("CHALLENGES", 20, 90),
-        "way_forward": ("WAY FORWARD", 20, 90),
-        "quick_facts": ("QUICK FACTS", 10, 80),
-        "what_upsc_asks": ("WHAT UPSC ASKS", 10, 60),
-        "key_takeaway": ("KEY TAKEAWAY", 12, 40),
+        "current_context": (
+            "CURRENT CONTEXT",
+            20,
+            70,
+        ),
+        "why_it_matters": (
+            "WHY IT MATTERS FOR UPSC",
+            20,
+            70,
+        ),
+        "core_concept": (
+            "CORE CONCEPT",
+            20,
+            90,
+        ),
+        "challenges": (
+            "CHALLENGES",
+            20,
+            90,
+        ),
+        "way_forward": (
+            "WAY FORWARD",
+            20,
+            90,
+        ),
+        "what_upsc_asks": (
+            "WHAT UPSC ASKS",
+            10,
+            60,
+        ),
+        "key_takeaway": (
+            "KEY TAKEAWAY",
+            12,
+            40,
+        ),
     }
 
-    for field_name, settings in preferred_lengths.items():
-        display_name, minimum_words, maximum_words = settings
+    for (
+        field_name,
+        settings,
+    ) in preferred_lengths.items():
+        (
+            display_name,
+            minimum_words,
+            maximum_words,
+        ) = settings
 
         validate_text_length(
             issue,
@@ -437,7 +569,9 @@ def validate_issue(
 # COMPLETE DATASET VALIDATION
 # ===========================================================
 
-def validate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
+def validate_dataset(
+    dataset: dict[str, Any],
+) -> dict[str, Any]:
     """
     Validates the complete parsed dataset.
 
@@ -452,22 +586,51 @@ def validate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
 
     result = create_validation_result()
 
-    if not isinstance(dataset, dict):
-        add_error(result, "Dataset must be a dictionary.")
+    if not isinstance(
+        dataset,
+        dict,
+    ):
+        add_error(
+            result,
+            "Dataset must be a dictionary.",
+        )
         return result
 
-    validate_paper(dataset, result)
-    validate_date(dataset, result)
-    validate_issue_count(dataset, result)
+    validate_paper(
+        dataset,
+        result,
+    )
 
-    issues = dataset.get("issues", [])
+    validate_date(
+        dataset,
+        result,
+    )
 
-    if not isinstance(issues, list):
+    validate_issue_count(
+        dataset,
+        result,
+    )
+
+    issues = dataset.get(
+        "issues",
+        [],
+    )
+
+    if not isinstance(
+        issues,
+        list,
+    ):
         return result
 
     detected_numbers: list[int] = []
 
-    for issue_position, issue in enumerate(issues, start=1):
+    for (
+        issue_position,
+        issue,
+    ) in enumerate(
+        issues,
+        start=1,
+    ):
         issue_number = validate_issue(
             issue,
             issue_position,
@@ -475,16 +638,29 @@ def validate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
         )
 
         if issue_number is not None:
-            detected_numbers.append(issue_number)
+            detected_numbers.append(
+                issue_number
+            )
 
-    if len(detected_numbers) != len(set(detected_numbers)):
-        add_error(result, "Duplicate ISSUE NUMBER values were detected.")
+    if len(detected_numbers) != len(
+        set(detected_numbers)
+    ):
+        add_error(
+            result,
+            "Duplicate ISSUE NUMBER values were detected.",
+        )
 
-    expected_numbers = list(range(1, len(issues) + 1))
+    expected_numbers = list(
+        range(
+            1,
+            len(issues) + 1,
+        )
+    )
 
     if (
         detected_numbers
-        and sorted(detected_numbers) != expected_numbers
+        and sorted(detected_numbers)
+        != expected_numbers
     ):
         add_warning(
             result,
@@ -500,7 +676,9 @@ def validate_dataset(dataset: dict[str, Any]) -> dict[str, Any]:
 # CONSOLE REPORT
 # ===========================================================
 
-def print_validation_report(result: dict[str, Any]) -> None:
+def print_validation_report(
+    result: dict[str, Any],
+) -> None:
     """
     Prints a readable validation report.
     """
@@ -528,8 +706,13 @@ def print_validation_report(result: dict[str, Any]) -> None:
         for warning in result["warnings"]:
             print(f"⚠ {warning}")
 
-    if not result["errors"] and not result["warnings"]:
-        print("✓ No errors or warnings detected")
+    if (
+        not result["errors"]
+        and not result["warnings"]
+    ):
+        print(
+            "✓ No errors or warnings detected"
+        )
 
     print("=" * 60)
 
@@ -540,14 +723,17 @@ def print_validation_report(result: dict[str, Any]) -> None:
 
 if __name__ == "__main__":
 
-    from reader import read_today_dataset
+    from src.reader import read_today_dataset
 
     try:
         data = read_today_dataset()
         validation = validate_dataset(data)
         print_validation_report(validation)
 
-    except (FileNotFoundError, ValueError) as error:
+    except (
+        FileNotFoundError,
+        ValueError,
+    ) as error:
         print("\nERROR")
         print("-" * 60)
         print(error)

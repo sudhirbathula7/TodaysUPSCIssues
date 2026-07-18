@@ -17,8 +17,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from config import DATE_FORMAT
-from validator import parse_issue_number, parse_rating, validate_dataset
+from src.config import DATE_FORMAT
+from src.validator import (
+    parse_issue_number,
+    parse_rating,
+    validate_dataset,
+)
 
 
 # ===========================================================
@@ -55,7 +59,7 @@ class Issue:
     core_concept: str = ""
     challenges: str = ""
     way_forward: str = ""
-    quick_facts: str = ""
+    quick_facts: list[str] = field(default_factory=list)
     what_upsc_asks: str = ""
     key_takeaway: str = ""
 
@@ -203,6 +207,23 @@ def normalise_questions(value: Any) -> list[str]:
 
     return questions
 
+def normalise_quick_facts(value: Any) -> list[str]:
+    """
+    Converts quick facts into a clean list.
+    """
+
+    if not isinstance(value, list):
+        return []
+
+    facts: list[str] = []
+
+    for fact in value:
+        cleaned = normalise_text(fact)
+
+        if cleaned:
+            facts.append(cleaned)
+
+    return facts
 
 def normalise_gs_paper(value: Any) -> str:
     """
@@ -318,8 +339,8 @@ def parse_issue(raw_issue: dict[str, Any]) -> Issue:
         way_forward=normalise_text(
             raw_issue.get("way_forward")
         ),
-        quick_facts=normalise_text(
-            raw_issue.get("quick_facts")
+        quick_facts=normalise_quick_facts(
+        raw_issue.get("quick_facts")
         ),
         what_upsc_asks=normalise_text(
             raw_issue.get("what_upsc_asks")
@@ -416,7 +437,7 @@ def print_parsed_book(book: DailyIssueBook) -> None:
 
 if __name__ == "__main__":
 
-    from reader import read_today_dataset
+    from src.reader import read_today_dataset
 
     try:
         raw_dataset = read_today_dataset()

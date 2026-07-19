@@ -92,8 +92,8 @@ RIGHT_COLUMN_RATIO = 0.34
 ISSUE_HEADER_HEIGHT = 14 * mm
 
 HEADER_INNER_GAP = 2 * mm
-HEADER_TITLE_RATIO = 0.75
-HEADER_BADGE_RATIO = 0.25
+HEADER_TITLE_RATIO = 0.80
+HEADER_BADGE_RATIO = 0.20
 
 
 # ===========================================================

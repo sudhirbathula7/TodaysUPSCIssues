@@ -202,12 +202,11 @@ def validate_issue_count(
 
     issue_count = len(issues)
 
-    if issue_count != SELECTED_ISSUES:
+    if issue_count not in (3, 4):
         add_error(
-            result,
-            f"Exactly {SELECTED_ISSUES} issues are required. "
-            f"Detected: {issue_count}.",
-        )
+        result,
+        f"Three or four issues are required. Detected: {issue_count}."
+    )
 
 
 # ===========================================================

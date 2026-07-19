@@ -1,196 +1,161 @@
-PAPER:
-The Hindu and Indian Express
+PAPER
+The Hindu + Indian Express
 
-DATE:
-14-07-2026
+DATE
+18-07-2026
 
-============================================================
-
-ISSUE NUMBER:
+ISSUE NUMBER
 1
 
-ISSUE TITLE:
-Strengthening Urban Flood Governance
+ISSUE TITLE
+India's Semiconductor Ecosystem and Strategic Chip Manufacturing
 
-GS PAPER:
+GS PAPER
 GS III
 
-SUBJECT:
-Disaster Management | Urban Governance
+SUBJECT
+Science & Technology | Economy | Industrial Policy
 
-RATING:
-4.8/5
+RATING
+5.0/5
 
-RECALL QUESTION 1:
-Why are Indian cities increasingly vulnerable to urban flooding?
+RECALL QUESTION 1
+Why are semiconductors considered strategic assets in the modern global economy?
 
-RECALL QUESTION 2:
-How can urban flood governance be improved?
+RECALL QUESTION 2
+Why is India focusing on mature-node chip manufacturing before advanced semiconductor fabrication?
 
-CURRENT CONTEXT:
-Rapid urbanisation, loss of wetlands, concretisation of drainage channels and inadequate storm-water infrastructure have increased flooding in Indian cities. Extreme rainfall now overwhelms drainage systems, exposing weaknesses in urban planning and disaster preparedness.
+CURRENT CONTEXT
+The Union Cabinet has approved the second phase of the India Semiconductor Mission with a ₹1.27 lakh crore outlay to strengthen semiconductor design, manufacturing, research and the supporting electronics ecosystem.
 
-WHY IT MATTERS FOR UPSC:
-Urban flooding links disaster management, climate adaptation, municipal governance and environmental conservation. UPSC frequently examines institutional failures, ecological degradation and practical solutions involving urban local bodies, planning authorities and disaster-management agencies.
+WHY IT MATTERS FOR UPSC
+Semiconductors influence technological self-reliance, national security, industrial competitiveness, global supply chains and India's ambition to emerge as a trusted electronics manufacturing hub.
 
-CORE CONCEPT:
-Urban flooding occurs when rainfall exceeds a city's drainage capacity. Unlike river floods, it is largely driven by blocked drains, wetland loss, unplanned construction, land-use changes and inadequate infrastructure maintenance.
+CORE CONCEPT
+A semiconductor ecosystem includes chip design, fabrication, packaging, materials, equipment, research, intellectual property, skilled manpower and resilient manufacturing infrastructure.
 
-CHALLENGES:
-Major challenges include fragmented institutions, outdated drainage maps, encroached water bodies, poor solid-waste management, weak enforcement of building regulations, inadequate forecasting and poor coordination among urban agencies.
+CHALLENGES
+High capital costs, technology dependence, infrastructure gaps, skilled workforce shortages, supply-chain vulnerabilities and rapid technological advancements remain major constraints.
 
-WAY FORWARD:
-Cities should restore wetlands, modernise drainage plans, strengthen early-warning systems, enforce climate-resilient building norms and improve municipal capacity. Community participation is essential for protecting drains and local water bodies.
+WAY FORWARD
+Strengthen industry-academia collaboration, expand semiconductor research, build reliable infrastructure, develop skilled talent, encourage domestic innovation and deepen integration with global value chains.
 
-QUICK FACTS:
-Urban flooding is usually localised and develops quickly. Wetlands act as natural water-storage systems. Storm-water drains must remain separate from sewage networks. Urban local bodies are primarily responsible for drainage, sanitation and local land-use management.
+QUICK FACTS
+• India Semiconductor Mission Phase-II Outlay: ₹1.27 lakh crore.
+• Mature-node chips (28 nm and above) account for nearly 70% of global demand.
+• Semiconductor design receives subsidies of up to 75% under the new policy.
+• India aims to gradually develop advanced 7 nm and 2 nm chip capabilities.
 
-WHAT UPSC ASKS:
-UPSC may ask about causes of urban floods, institutional weaknesses, climate-resilient urban planning, the role of urban local bodies and the importance of wetlands and drainage systems.
+WHAT UPSC ASKS
+Why is semiconductor self-reliance strategically important for India? Discuss the opportunities and challenges in developing a domestic semiconductor ecosystem.
 
-KEY TAKEAWAY:
-Urban flooding is not merely a rainfall problem; it reflects failures in planning, drainage, ecological protection and municipal governance.
+KEY TAKEAWAY
+A strong semiconductor ecosystem is essential for India's technological sovereignty, industrial growth and long-term strategic resilience.
 
-============================================================
+PAPER
+The Hindu
 
-ISSUE NUMBER:
+DATE
+18-07-2026
+
+ISSUE NUMBER
 2
 
-ISSUE TITLE:
-Improving Parliamentary Committee Scrutiny
+ISSUE TITLE
+Climate Change, Heat Stress and Sleep as a Public Health Challenge
 
-GS PAPER:
-GS II
+GS PAPER
+GS III | GS II
 
-SUBJECT:
-Polity | Parliament | Governance
+SUBJECT
+Environment | Public Health
 
-RATING:
-4.7/5
+RATING
+5.0/5
 
-RECALL QUESTION 1:
-Why are parliamentary committees important for legislative scrutiny?
+RECALL QUESTION 1
+How does climate change affect human sleep and overall public health?
 
-RECALL QUESTION 2:
-What reforms can improve the functioning of parliamentary committees?
+RECALL QUESTION 2
+Why should sleep health become an integral part of urban and public health planning?
 
-CURRENT CONTEXT:
-The increasing passage of Bills with limited debate has renewed attention on parliamentary committees. These committees allow detailed examination of legislation, expenditure and government performance away from political confrontation on the floor of Parliament.
+CURRENT CONTEXT
+Studies indicate that rising night-time temperatures linked to climate change are reducing sleeping hours across Indian cities, highlighting sleep deprivation as an emerging public health concern.
 
-WHY IT MATTERS FOR UPSC:
-Parliamentary committees are central to legislative accountability, executive oversight and informed lawmaking. UPSC may ask about their functions, limitations, constitutional position and contribution to deliberative democracy.
+WHY IT MATTERS FOR UPSC
+The issue links climate change, urbanisation and public health while influencing productivity, healthcare costs, non-communicable diseases and climate adaptation policies.
 
-CORE CONCEPT:
-Parliamentary committees are smaller groups of Members of Parliament constituted to examine Bills, budgets, policies and government departments. They enable detailed discussion, expert consultation and cross-party scrutiny that is difficult during regular parliamentary proceedings.
+CORE CONCEPT
+Sleep is a vital biological process supporting immunity, metabolism, cognitive function and cellular repair, making healthy sleep an important component of preventive healthcare.
 
-CHALLENGES:
-Committee recommendations are generally advisory, many Bills are not referred to committees, meetings lack transparency, research support is limited and frequent political disruptions reduce parliamentary deliberation. Short tenures may also weaken institutional expertise.
+CHALLENGES
+Warmer nights, urban heat islands, poor housing, lifestyle changes, excessive screen exposure and inadequate public awareness contribute to chronic sleep deprivation.
 
-WAY FORWARD:
-Important Bills should normally undergo committee scrutiny. Committees need stronger research assistance, sufficient time, regular attendance and systematic follow-up on recommendations. Reports should be made accessible while protecting confidential deliberations where necessary.
+WAY FORWARD
+Integrate sleep health into public health programmes, strengthen heat action plans, improve urban planning, promote affordable cooling solutions and encourage healthy lifestyle practices.
 
-QUICK FACTS:
-Department-related Standing Committees examine ministries and Demands for Grants.
-Select Committees examine specific Bills before they are passed.
-The Public Accounts Committee examines CAG reports on government expenditure.
-Committee recommendations are advisory but improve legislative scrutiny and accountability.
+QUICK FACTS
+• Rising night-time temperatures are linked to significant annual sleep loss.
+• Urban heat island effects worsen heat stress in densely populated cities.
+• Chronic sleep deprivation increases the risk of hypertension, diabetes and cardiovascular diseases.
+• Heat Action Plans primarily address daytime heat but increasingly require night-time interventions.
 
-WHAT UPSC ASKS:
-UPSC may examine the role of committees in executive accountability, legislative quality, financial oversight and strengthening parliamentary democracy.
+WHAT UPSC ASKS
+Discuss how climate change is emerging as a public health challenge with special reference to sleep deprivation and urban heat stress.
 
-KEY TAKEAWAY:
-Effective parliamentary committees improve lawmaking by combining detailed scrutiny, expert evidence and bipartisan deliberation.
+KEY TAKEAWAY
+Protecting healthy sleep requires coordinated action across climate policy, urban planning and preventive public health systems.
 
-============================================================
+PAPER
+The Hindu
 
-ISSUE NUMBER:
+DATE
+18-07-2026
+
+ISSUE NUMBER
 3
 
-ISSUE TITLE:
-Building Resilient Public Health Systems
+ISSUE TITLE
+Combating Synthetic Drug Networks and Strengthening India's Anti-Narcotics Framework
 
-GS PAPER:
-GS II
+GS PAPER
+GS III | GS II
 
-SUBJECT:
-Health | Governance | Social Justice
+SUBJECT
+Internal Security | Governance | Social Issues
 
-RATING:
+RATING
 4.8/5
 
-RECALL QUESTION 1:
-What makes a public health system resilient?
+RECALL QUESTION 1
+Why have synthetic drugs become a major internal security and public health concern in India?
 
-RECALL QUESTION 2:
-How can India strengthen preparedness for future health emergencies?
+RECALL QUESTION 2
+How can technology strengthen anti-narcotics enforcement and prosecution?
 
-CURRENT CONTEXT:
-Recent disease outbreaks have shown that health systems require more than hospitals and treatment facilities. Surveillance, primary healthcare, trained personnel, laboratories, reliable data and coordination between different levels of government are essential for managing health emergencies.
+CURRENT CONTEXT
+Kerala has intensified anti-drug enforcement through Operation Toofan, combining inter-state coordination, intelligence sharing, rehabilitation and stronger investigation against synthetic drug networks.
 
-WHY IT MATTERS FOR UPSC:
-Public health resilience relates to welfare governance, federalism, human resources, health financing and emergency preparedness. UPSC may ask how India can move from reactive disease control towards prevention, early detection and coordinated response.
+WHY IT MATTERS FOR UPSC
+Drug trafficking affects internal security, organised crime, youth welfare, cybercrime, public health and cooperative federalism in law enforcement.
 
-CORE CONCEPT:
-A resilient health system can prepare for, absorb, respond to and recover from health shocks while continuing essential services. It depends on preventive care, disease surveillance, primary health institutions, trained workers, supply chains and public trust.
+CORE CONCEPT
+An effective anti-narcotics framework combines prevention, enforcement, intelligence sharing, cyber forensics, rehabilitation and coordinated prosecution against organised criminal networks.
 
-CHALLENGES:
-India faces uneven health infrastructure, shortages of doctors and nurses, weak rural facilities, fragmented disease data, low public spending, supply-chain gaps and coordination difficulties among Union, State and local authorities.
+CHALLENGES
+Digital drug networks, encrypted communication, weak forensic evidence, inter-state trafficking, limited cyber capabilities and complex criminal syndicates hinder effective enforcement.
 
-WAY FORWARD:
-India should strengthen primary healthcare, expand laboratory networks, improve integrated disease surveillance, maintain emergency reserves, train health workers and promote cooperation among governments. Transparent communication and community participation are equally important for maintaining public trust.
+WAY FORWARD
+Strengthen cyber forensic capacity, enhance intelligence sharing, improve inter-state coordination, modernise investigative agencies, expand rehabilitation services and ensure speedy prosecution.
 
-QUICK FACTS:
-Public health focuses on population-level prevention and protection. Primary healthcare is the first point of contact. Disease surveillance supports early warning. Health is primarily a State subject, while the Union also supports national programmes and coordination.
+QUICK FACTS
+• Operation Toofan is Kerala's integrated anti-drug enforcement initiative.
+• NCORD promotes national coordination against narcotics trafficking.
+• NIDAAN maintains a database of arrested narcotics offenders.
+• Synthetic drugs increasingly dominate organised narcotics trafficking networks.
 
-WHAT UPSC ASKS:
-UPSC may ask about public health infrastructure, preventive healthcare, health federalism, disease surveillance, primary healthcare and lessons from epidemics.
+WHAT UPSC ASKS
+Examine the growing challenge of synthetic drug trafficking in India and evaluate measures needed to strengthen the country's anti-narcotics framework.
 
-KEY TAKEAWAY:
-Public health resilience requires prevention, surveillance, primary care, trained personnel and coordinated governance before a crisis begins.
-
-============================================================
-
-ISSUE NUMBER:
-4
-
-ISSUE TITLE:
-Protecting India’s Coastal Ecosystems
-
-GS PAPER:
-GS III
-
-SUBJECT:
-Environment | Climate Change | Geography
-
-RATING:
-4.6/5
-
-RECALL QUESTION 1:
-Why are coastal ecosystems important for climate resilience?
-
-RECALL QUESTION 2:
-What measures can reduce pressure on India’s coastal regions?
-
-CURRENT CONTEXT:
-India’s coastal regions face erosion, habitat destruction, pollution, unplanned construction, rising sea levels and stronger cyclonic events. Mangroves, wetlands, sand dunes and coral ecosystems are increasingly important for reducing disaster risks and supporting livelihoods.
-
-WHY IT MATTERS FOR UPSC:
-Coastal ecosystems connect environmental conservation, disaster management, climate change, fisheries, livelihoods and sustainable development. UPSC may test both ecological significance and governance mechanisms for coastal regulation.
-
-CORE CONCEPT:
-Coastal ecosystems provide natural protection against storms and erosion, store carbon, support fisheries and maintain biodiversity. Their destruction increases the vulnerability of settlements and infrastructure to climate-related hazards.
-
-CHALLENGES:
-Major challenges include illegal construction, industrial pollution, tourism pressure, sand mining, weak enforcement of coastal rules, livelihood conflicts and inadequate coordination among environmental, fisheries, tourism and urban-development authorities.
-
-WAY FORWARD:
-India should restore mangroves and dunes, enforce coastal regulations, control pollution, map vulnerable zones and involve fishing communities in conservation. Infrastructure planning must account for sea-level rise, erosion patterns and ecosystem services.
-
-QUICK FACTS:
-Mangroves reduce wave energy and coastal erosion. Coral reefs support marine biodiversity. Coastal Regulation Zone rules regulate activities near the coast. Coastal communities depend heavily on fisheries and ecosystem health.
-
-WHAT UPSC ASKS:
-UPSC may ask about mangroves, coastal erosion, coastal regulation, blue economy, climate adaptation and community-based conservation.
-
-KEY TAKEAWAY:
-Healthy coastal ecosystems are essential natural infrastructure for biodiversity, livelihoods and protection against climate-related disasters.
+KEY TAKEAWAY
+Combating narcotics requires integrated enforcement, technological capability, community participation and coordinated action across governments and agencies.

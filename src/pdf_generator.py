@@ -1,424 +1,887 @@
 """
 ============================================================
-Today's UPSC Issues
-Production PDF Generator
-Version : 1.0
+TODAY'S UPSC ISSUES
+PDF GENERATOR
+Version 2.0
 Created by Sudhir
 ============================================================
 
-Generates the final two-page A4 portrait publication from a
-validated DailyIssueBook dataset.
+PURPOSE
 
-This module does not read the daily input file directly.
+Generates the final portrait PDF from the Version 2.0 daily
+PDF dataset.
+
+WORKFLOW
+
+1. Locate the dated pdf_dataset.json file.
+2. Validate all issue content.
+3. Load previous-day recall questions.
+4. Fall back to current issue recall questions only when the
+   previous-day recall schedule is unavailable during development.
+5. Create an A4 portrait PDF.
+6. Place two issues on every page.
+7. Use the existing locked layout and drawing components.
+8. Save the final PDF using DD-MM-YY naming.
+
+DEFAULT COMMAND
+
+python -m src.pdf_generator 2026-07-19
+
+REBUILD COMMAND
+
+python -m src.pdf_generator 2026-07-19 --overwrite
+
+OPEN AFTER GENERATION
+
+python -m src.pdf_generator 2026-07-19 --overwrite --open
+============================================================
 """
 
 from __future__ import annotations
 
+import argparse
+import json
 import os
+import sys
+from dataclasses import dataclass
+from datetime import date, datetime
 from pathlib import Path
+from typing import Any
 
 from reportlab.pdfgen import canvas
-from src.layout import ISSUE_GAP
-from src.components.content_section import draw_content_sections
-from src.components.footer import draw_footer
-from src.components.header import draw_header
-from src.components.helpers import draw_horizontal_line
-from src.components.issue_header import draw_issue_header
-from src.components.quick_facts import draw_quick_facts
-from src.components.recall_questions import draw_recall_questions
-from src.components.takeaway import draw_takeaway
-from src.layout import (
+
+
+# ============================================================
+# PROJECT IMPORT SUPPORT
+# ============================================================
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# ============================================================
+# PROJECT COMPONENTS
+# ============================================================
+
+from src.components.content_section import (  # noqa: E402
+    ContentSection,
+    draw_content_sections,
+)
+from src.components.footer import draw_footer  # noqa: E402
+from src.components.header import draw_header  # noqa: E402
+from src.components.issue_header import draw_issue_header  # noqa: E402
+from src.components.quick_facts import draw_quick_facts  # noqa: E402
+from src.components.recall_questions import (  # noqa: E402
+    draw_recall_questions,
+)
+from src.components.takeaway import draw_takeaway  # noqa: E402
+from src.layout import (  # noqa: E402
     PAGE_HEIGHT,
     PAGE_WIDTH,
     IssueLayout,
     create_layout,
 )
-from src.parser import DailyIssueBook, Issue
 
 
-# ==========================================================
+# ============================================================
 # PROJECT PATHS
-# ==========================================================
+# ============================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "output"
+OUTPUT_ROOT = PROJECT_ROOT / "output"
+DAILY_OUTPUT_ROOT = OUTPUT_ROOT / "daily"
 
-
-# ==========================================================
-# PUBLICATION SETTINGS
-# ==========================================================
-
-ISSUES_PER_PAGE = 2
-TOTAL_ISSUES = 4
-TOTAL_PAGES = 2
-
-PDF_TITLE = "Today's UPSC Issues"
-PDF_AUTHOR = "Sudhir"
-PDF_SUBJECT = "Daily UPSC issue-based learning publication"
+REPOSITORY_ROOT = PROJECT_ROOT / "Repository"
+DAILY_REPOSITORY_ROOT = REPOSITORY_ROOT / "daily"
 
 
-# ==========================================================
-# OUTPUT HELPERS
-# ==========================================================
+# ============================================================
+# FILE NAMES
+# ============================================================
 
-def build_document_code(book: DailyIssueBook) -> str:
+PDF_DATASET_FILE = "pdf_dataset.json"
+SELECTED_ISSUES_FILE = "selected_issues.json"
+
+PDF_FILENAME_PREFIX = "Todays_UPSC_Issues"
+
+
+# ============================================================
+# EXCEPTIONS
+# ============================================================
+
+class PDFGeneratorError(Exception):
+    """Base exception for final PDF generation errors."""
+
+
+class PDFDatasetError(PDFGeneratorError):
+    """Raised when the PDF dataset is missing or invalid."""
+
+
+class PDFAlreadyExistsError(PDFGeneratorError):
+    """Raised when the final PDF already exists."""
+
+
+class PDFContentOverflowError(PDFGeneratorError):
+    """Raised when issue content cannot fit in its allocated area."""
+
+
+# ============================================================
+# RESULT
+# ============================================================
+
+@dataclass(frozen=True)
+class PDFResult:
+    """Summary returned after final PDF generation."""
+
+    publication_date: str
+    pdf_path: Path
+    issue_count: int
+    page_count: int
+    document_code: str
+
+    def display(self) -> None:
+        """Print a readable result summary."""
+
+        print("=" * 64)
+        print("TODAY'S UPSC ISSUES")
+        print("FINAL PDF GENERATOR")
+        print("=" * 64)
+        print(f"Publication date : {self.publication_date}")
+        print(f"Document code    : {self.document_code}")
+        print(f"Issues rendered  : {self.issue_count}")
+        print(f"Pages generated  : {self.page_count}")
+        print(f"Final PDF        : {self.pdf_path}")
+        print("-" * 64)
+        print("✓ Final portrait PDF generated successfully")
+        print("=" * 64)
+
+
+# ============================================================
+# DATE HELPERS
+# ============================================================
+
+def _parse_date(value: str | date | datetime) -> date:
+    """Convert supported date values into a date object."""
+
+    if isinstance(value, datetime):
+        return value.date()
+
+    if isinstance(value, date):
+        return value
+
+    cleaned = str(value).strip()
+
+    supported_formats = (
+        "%Y-%m-%d",
+        "%d-%m-%y",
+        "%d-%m-%Y",
+        "%d/%m/%Y",
+        "%d %B %Y",
+        "%d %b %Y",
+    )
+
+    for format_string in supported_formats:
+        try:
+            return datetime.strptime(
+                cleaned,
+                format_string,
+            ).date()
+        except ValueError:
+            continue
+
+    raise PDFDatasetError(
+        "Unsupported publication date. Use one of these formats:\n"
+        "2026-07-19\n"
+        "19-07-26\n"
+        "19-07-2026\n"
+        "19/07/2026\n"
+        "19 July 2026"
+    )
+
+
+def _display_date(publication_date: date) -> str:
+    """Return the locked display and folder date."""
+
+    return publication_date.strftime("%d-%m-%y")
+
+
+def _iso_date(publication_date: date) -> str:
+    """Return the legacy ISO date used by earlier Version 2.0 files."""
+
+    return publication_date.isoformat()
+
+
+def _document_code(publication_date: date) -> str:
+    """Return the locked document code."""
+
+    return f"#TUI-{publication_date.strftime('%y%m%d')}"
+
+
+# ============================================================
+# JSON HELPERS
+# ============================================================
+
+def _read_json(path: Path) -> Any:
+    """Read a UTF-8 JSON file."""
+
+    if not path.exists():
+        raise PDFDatasetError(
+            f"Required JSON file was not found:\n{path}"
+        )
+
+    try:
+        with path.open("r", encoding="utf-8") as file:
+            return json.load(file)
+
+    except json.JSONDecodeError as error:
+        raise PDFDatasetError(
+            f"Invalid JSON file:\n{path}\n"
+            f"Line {error.lineno}, column {error.colno}: "
+            f"{error.msg}"
+        ) from error
+
+
+def _clean_text(value: Any) -> str:
+    """Return trimmed text."""
+
+    if value is None:
+        return ""
+
+    return str(value).strip()
+
+
+# ============================================================
+# PATH RESOLUTION
+# ============================================================
+
+def _candidate_daily_folders(
+    root: Path,
+    publication_date: date,
+) -> tuple[Path, Path]:
     """
-    Build the footer document code.
+    Return new and legacy dated folder candidates.
 
-    Example:
-        18 July 2026 -> #TUI-260718
+    Priority:
+    1. DD-MM-YY
+    2. YYYY-MM-DD
     """
 
     return (
-        "#TUI-"
-        + book.publication_date.strftime("%y%m%d")
+        root / _display_date(publication_date),
+        root / _iso_date(publication_date),
     )
 
 
-def build_default_output_path(
-    book: DailyIssueBook,
+def find_pdf_dataset_path(
+    publication_date: str | date | datetime,
 ) -> Path:
-    """
-    Build the standard output PDF path.
+    """Locate the prepared daily PDF dataset."""
 
-    Example:
-        output/TUI_260718.pdf
+    parsed_date = _parse_date(publication_date)
+
+    for folder in _candidate_daily_folders(
+        DAILY_OUTPUT_ROOT,
+        parsed_date,
+    ):
+        path = folder / PDF_DATASET_FILE
+
+        if path.exists():
+            return path
+
+    searched_paths = "\n".join(
+        str(folder / PDF_DATASET_FILE)
+        for folder in _candidate_daily_folders(
+            DAILY_OUTPUT_ROOT,
+            parsed_date,
+        )
+    )
+
+    raise PDFDatasetError(
+        "PDF dataset was not found. Searched:\n"
+        f"{searched_paths}"
+    )
+
+
+def find_selected_issues_path(
+    publication_date: date,
+) -> Path | None:
     """
+    Locate the repository selected-issues file.
+
+    This file provides current recall questions as a development
+    fallback when previous-day recall data is unavailable.
+    """
+
+    for folder in _candidate_daily_folders(
+        DAILY_REPOSITORY_ROOT,
+        publication_date,
+    ):
+        path = folder / SELECTED_ISSUES_FILE
+
+        if path.exists():
+            return path
+
+    return None
+
+
+def get_final_pdf_folder(
+    publication_date: date,
+) -> Path:
+    """Return the locked DD-MM-YY final output folder."""
+
+    return (
+        DAILY_OUTPUT_ROOT
+        / _display_date(publication_date)
+    )
+
+
+def get_final_pdf_path(
+    publication_date: date,
+) -> Path:
+    """Return the locked final PDF path."""
 
     filename = (
-        "TUI_"
-        + book.publication_date.strftime("%y%m%d")
-        + ".pdf"
+        f"{PDF_FILENAME_PREFIX}_"
+        f"{_display_date(publication_date)}.pdf"
     )
 
-    return DEFAULT_OUTPUT_DIR / filename
-
-
-def _prepare_output_path(
-    output_path: str | Path | None,
-    book: DailyIssueBook,
-) -> Path:
-    """
-    Resolve and create the output directory.
-    """
-
-    if output_path is None:
-        resolved_path = build_default_output_path(
-            book
-        )
-    else:
-        resolved_path = Path(output_path)
-
-    if resolved_path.suffix.lower() != ".pdf":
-        resolved_path = resolved_path.with_suffix(
-            ".pdf"
-        )
-
-    resolved_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
+    return (
+        get_final_pdf_folder(publication_date)
+        / filename
     )
 
-    return resolved_path
+
+# ============================================================
+# DATASET LOADING
+# ============================================================
+
+def load_pdf_dataset(
+    publication_date: str | date | datetime,
+) -> dict[str, Any]:
+    """Load and validate the prepared daily PDF dataset."""
+
+    parsed_date = _parse_date(publication_date)
+    dataset_path = find_pdf_dataset_path(parsed_date)
+    dataset = _read_json(dataset_path)
+
+    if not isinstance(dataset, dict):
+        raise PDFDatasetError(
+            "pdf_dataset.json must contain a JSON object."
+        )
+
+    issues = dataset.get("issues")
+
+    if not isinstance(issues, list):
+        raise PDFDatasetError(
+            'pdf_dataset.json must contain an "issues" list.'
+        )
+
+    if not issues:
+        raise PDFDatasetError(
+            "The PDF dataset does not contain any issues."
+        )
+
+    if len(issues) > 8:
+        raise PDFDatasetError(
+            "The final PDF supports a maximum of eight issues."
+        )
+
+    dataset["_dataset_path"] = dataset_path
+    dataset["_parsed_date"] = parsed_date
+
+    validate_pdf_dataset(dataset)
+
+    return dataset
 
 
-# ==========================================================
-# DATA MAPPING
-# ==========================================================
+# ============================================================
+# DATASET VALIDATION
+# ============================================================
 
-def _build_content_sections(
-    issue: Issue,
-) -> list[tuple[str, str]]:
-    """
-    Convert an Issue into the five locked left-column sections.
-    """
-
-    return [
-        (
-            "Core Issue",
-            issue.core_concept,
-        ),
-        (
-            "What's Happening?",
-            issue.current_context,
-        ),
-        (
-            "Why It Matters",
-            issue.why_it_matters,
-        ),
-        (
-            "Key Challenges",
-            issue.challenges,
-        ),
-        (
-            "The Way Forward",
-            issue.way_forward,
-        ),
-    ]
-
-
-def _validate_issue_for_drawing(
-    issue: Issue,
+def validate_pdf_dataset(
+    dataset: dict[str, Any],
 ) -> None:
-    """
-    Perform final drawing-level checks.
-    """
+    """Validate all issue fields required by the renderer."""
 
-    if len(issue.recall_questions) != 2:
-        raise ValueError(
-            f"Issue {issue.issue_number}: exactly "
-            "2 recall questions are required."
-        )
+    issues = dataset["issues"]
 
-    if not isinstance(
-        issue.quick_facts,
-        (list, tuple),
+    required_text_fields = (
+        "title",
+        "gs_paper",
+        "current_context",
+        "why_it_matters_for_upsc",
+        "core_concept",
+        "challenges",
+        "way_forward",
+        "key_takeaway",
+    )
+
+    for issue_number, issue in enumerate(
+        issues,
+        start=1,
     ):
-        raise TypeError(
-            f"Issue {issue.issue_number}: quick_facts "
-            "must be a list or tuple."
-        )
+        if not isinstance(issue, dict):
+            raise PDFDatasetError(
+                f"Issue {issue_number} must be a JSON object."
+            )
 
-    if len(issue.quick_facts) != 4:
-        raise ValueError(
-            f"Issue {issue.issue_number}: exactly "
-            "4 Quick Facts are required."
-        )
+        for field_name in required_text_fields:
+            value = _clean_text(
+                issue.get(field_name)
+            )
+
+            if not value:
+                raise PDFDatasetError(
+                    f"Issue {issue_number} is missing "
+                    f"required field: {field_name}"
+                )
+
+        quick_facts = issue.get("quick_facts")
+
+        if not isinstance(
+            quick_facts,
+            (list, tuple),
+        ):
+            raise PDFDatasetError(
+                f"Issue {issue_number} Quick Facts "
+                "must be a list."
+            )
+
+        if len(quick_facts) != 4:
+            raise PDFDatasetError(
+                f"Issue {issue_number} must contain "
+                "exactly four Quick Facts."
+            )
+
+        if any(
+            not _clean_text(fact)
+            for fact in quick_facts
+        ):
+            raise PDFDatasetError(
+                f"Issue {issue_number} contains an "
+                "empty Quick Fact."
+            )
 
 
-# ==========================================================
-# ISSUE DRAWING
-# ==========================================================
+# ============================================================
+# RECALL QUESTION RESOLUTION
+# ============================================================
 
-def draw_issue(
-    pdf: canvas.Canvas,
-    layout: IssueLayout,
-    issue: Issue,
-) -> None:
-    """
-    Draw one complete issue inside its allocated layout.
-    """
+def _extract_scheduled_recall_sets(
+    dataset: dict[str, Any],
+) -> list[list[str]]:
+    """Extract previous-day recall questions from pdf_dataset.json."""
 
-    _validate_issue_for_drawing(
-        issue
+    raw_recall = dataset.get(
+        "recall_questions",
+        [],
     )
 
-    draw_issue_header(
-        pdf=pdf,
-        box=layout.header,
-        issue_number=issue.issue_number,
-        title=issue.issue_title,
-        gs_paper=issue.gs_paper,
-        category=issue.subject,
-        rating=issue.display_rating,
+    if not isinstance(raw_recall, list):
+        return []
+
+    recall_sets: list[list[str]] = []
+
+    for entry in raw_recall:
+        if isinstance(entry, dict):
+            questions = entry.get(
+                "questions",
+                [],
+            )
+        else:
+            questions = entry
+
+        if (
+            isinstance(questions, (list, tuple))
+            and len(questions) == 2
+        ):
+            cleaned_questions = [
+                _clean_text(question)
+                for question in questions
+            ]
+
+            if all(cleaned_questions):
+                recall_sets.append(
+                    cleaned_questions
+                )
+
+    return recall_sets
+
+
+def _extract_current_recall_sets(
+    publication_date: date,
+) -> list[list[str]]:
+    """
+    Extract current-day recall questions from selected_issues.json.
+
+    Used only when previous-day recall data is unavailable.
+    """
+
+    selected_issues_path = find_selected_issues_path(
+        publication_date
     )
 
-    draw_content_sections(
-        pdf=pdf,
-        box=layout.content,
-        sections=_build_content_sections(
-            issue
+    if selected_issues_path is None:
+        return []
+
+    selected_dataset = _read_json(
+        selected_issues_path
+    )
+
+    issues = selected_dataset.get(
+        "issues",
+        [],
+    )
+
+    if not isinstance(issues, list):
+        return []
+
+    recall_sets: list[list[str]] = []
+
+    for issue in issues:
+        if not isinstance(issue, dict):
+            continue
+
+        recall = issue.get(
+            "recall",
+            {},
+        )
+
+        questions = (
+            recall.get("questions", [])
+            if isinstance(recall, dict)
+            else []
+        )
+
+        if (
+            isinstance(questions, (list, tuple))
+            and len(questions) == 2
+        ):
+            cleaned_questions = [
+                _clean_text(question)
+                for question in questions
+            ]
+
+            if all(cleaned_questions):
+                recall_sets.append(
+                    cleaned_questions
+                )
+
+    return recall_sets
+
+
+def resolve_recall_sets(
+    dataset: dict[str, Any],
+    publication_date: date,
+) -> list[list[str]]:
+    """
+    Resolve one recall set for each rendered issue.
+
+    Priority:
+    1. Previous-day scheduled recall questions
+    2. Current-day recall questions for development fallback
+    """
+
+    issue_count = len(
+        dataset["issues"]
+    )
+
+    recall_sets = _extract_scheduled_recall_sets(
+        dataset
+    )
+
+    if len(recall_sets) < issue_count:
+        current_recall_sets = _extract_current_recall_sets(
+            publication_date
+        )
+
+        for recall_set in current_recall_sets:
+            if len(recall_sets) >= issue_count:
+                break
+
+            recall_sets.append(recall_set)
+
+    if len(recall_sets) < issue_count:
+        raise PDFDatasetError(
+            "There are not enough recall-question sets for "
+            f"{issue_count} issue(s).\n"
+            f"Available recall sets: {len(recall_sets)}\n"
+            "Each issue requires exactly two recall questions."
+        )
+
+    return recall_sets[:issue_count]
+
+
+# ============================================================
+# ISSUE MAPPING
+# ============================================================
+
+def build_content_sections(
+    issue: dict[str, Any],
+) -> tuple[ContentSection, ...]:
+    """Map Version 2.0 dataset fields to locked PDF headings."""
+
+    return (
+        ContentSection(
+            heading="Current Context",
+            text=_clean_text(
+                issue["current_context"]
+            ),
+        ),
+        ContentSection(
+            heading="Why It Matters for UPSC",
+            text=_clean_text(
+                issue["why_it_matters_for_upsc"]
+            ),
+        ),
+        ContentSection(
+            heading="Core Concept",
+            text=_clean_text(
+                issue["core_concept"]
+            ),
+        ),
+        ContentSection(
+            heading="Challenges",
+            text=_clean_text(
+                issue["challenges"]
+            ),
+        ),
+        ContentSection(
+            heading="Way Forward",
+            text=_clean_text(
+                issue["way_forward"]
+            ),
         ),
     )
 
-    draw_recall_questions(
-        pdf=pdf,
-        box=layout.recall,
-        questions=issue.recall_questions,
-    )
 
-    draw_quick_facts(
-        pdf=pdf,
-        box=layout.quick_facts,
-        facts=issue.quick_facts,
-    )
+# ============================================================
+# ISSUE RENDERER
+# ============================================================
 
-    draw_takeaway(
-        pdf=pdf,
-        box=layout.takeaway,
-        takeaway=issue.key_takeaway,
-    )
-
-
-# ==========================================================
-# PAGE DRAWING
-# ==========================================================
-
-def _draw_page_background(
+def render_issue(
     pdf: canvas.Canvas,
+    issue_layout: IssueLayout,
+    issue: dict[str, Any],
+    issue_number: int,
+    recall_questions: list[str],
 ) -> None:
-    """
-    Draw a clean white page background.
-    """
-
-    pdf.saveState()
+    """Render one complete issue using existing components."""
 
     try:
-        pdf.setFillColorRGB(
-            1,
-            1,
-            1,
+        draw_issue_header(
+            pdf=pdf,
+            box=issue_layout.header,
+            issue_number=issue_number,
+            title=_clean_text(issue["title"]),
+            gs_paper=_clean_text(issue["gs_paper"]),
+            category=_clean_text(
+                issue.get("category", "")
+            ),
+            rating=_clean_text(
+                issue.get("rating", "")
+            ),
         )
 
-        pdf.rect(
-            0,
-            0,
-            PAGE_WIDTH,
-            PAGE_HEIGHT,
-            stroke=0,
-            fill=1,
+        draw_content_sections(
+            pdf=pdf,
+            box=issue_layout.content,
+            sections=build_content_sections(issue),
         )
 
-    finally:
-        pdf.restoreState()
+        draw_recall_questions(
+            pdf=pdf,
+            box=issue_layout.recall,
+            questions=recall_questions,
+        )
+
+        draw_quick_facts(
+            pdf=pdf,
+            box=issue_layout.quick_facts,
+            facts=issue["quick_facts"],
+        )
+
+        draw_takeaway(
+            pdf=pdf,
+            box=issue_layout.takeaway,
+            takeaway=_clean_text(
+                issue["key_takeaway"]
+            ),
+        )
+
+    except ValueError as error:
+        raise PDFContentOverflowError(
+            f"Unable to render Issue {issue_number}: "
+            f"{issue.get('title', 'Untitled Issue')}\n"
+            f"{error}"
+        ) from error
 
 
-def draw_publication_page(
+# ============================================================
+# PAGE RENDERER
+# ============================================================
+
+def render_page(
     pdf: canvas.Canvas,
-    book: DailyIssueBook,
+    issues_on_page: list[dict[str, Any]],
+    recall_sets_on_page: list[list[str]],
+    first_issue_number: int,
+    publication_date: date,
     page_number: int,
-    page_issues: list[Issue],
+    total_pages: int,
 ) -> None:
-    """
-    Draw one complete publication page.
-    """
+    """Render one portrait page containing one or two issues."""
 
-    if page_number < 1:
-        raise ValueError(
-            "Page number must be at least 1."
-        )
-
-    if len(page_issues) != ISSUES_PER_PAGE:
-        raise ValueError(
-            f"Page {page_number} requires exactly "
-            f"{ISSUES_PER_PAGE} issues."
-        )
-
-    layout = create_layout()
-
-    _draw_page_background(
-        pdf
-    )
+    page_layout = create_layout()
 
     draw_header(
         pdf=pdf,
-        box=layout.header,
-        date_text=book.formatted_date,
-    )
-
-    draw_issue(
-        pdf=pdf,
-        layout=layout.issue1,
-        issue=page_issues[0],
-    )
-
-    # Divider
-    draw_horizontal_line(
-        canvas=pdf,
-        x1=layout.issue1.area.x,
-        y=layout.issue2.area.top + (ISSUE_GAP / 2),
-        x2=layout.issue1.area.right,
-        thickness=0.6,
-    )
-
-    draw_issue(
-        pdf=pdf,
-        layout=layout.issue2,
-        issue=page_issues[1],
+        box=page_layout.header,
+        date_text=_display_date(
+            publication_date
+        ),
     )
 
     draw_footer(
         pdf=pdf,
-        box=layout.footer,
-        document_code=build_document_code(
-            book
+        box=page_layout.footer,
+        document_code=_document_code(
+            publication_date
         ),
         page_number=page_number,
-        total_pages=TOTAL_PAGES,
+        total_pages=total_pages,
     )
 
+    issue_slots = (
+        page_layout.issue1,
+        page_layout.issue2,
+    )
 
-# ==========================================================
-# PDF GENERATION
-# ==========================================================
-
-def generate_pdf(
-    book: DailyIssueBook,
-    output_path: str | Path | None = None,
-) -> Path:
-    """
-    Generate the final two-page production PDF.
-
-    Returns:
-        Path to the generated PDF.
-    """
-
-    if not isinstance(
-        book,
-        DailyIssueBook,
+    for local_index, issue in enumerate(
+        issues_on_page
     ):
-        raise TypeError(
-            "generate_pdf expects a DailyIssueBook object."
+        render_issue(
+            pdf=pdf,
+            issue_layout=issue_slots[local_index],
+            issue=issue,
+            issue_number=(
+                first_issue_number
+                + local_index
+            ),
+            recall_questions=(
+                recall_sets_on_page[
+                    local_index
+                ]
+            ),
         )
 
-    if book.issue_count != TOTAL_ISSUES:
-        raise ValueError(
-            f"Exactly {TOTAL_ISSUES} issues are required. "
-            f"Detected: {book.issue_count}."
-        )
 
-    output_file = _prepare_output_path(
-        output_path=output_path,
-        book=book,
+# ============================================================
+# PDF GENERATION
+# ============================================================
+
+def generate_final_pdf(
+    publication_date: str | date | datetime,
+    overwrite: bool = False,
+    open_after_generation: bool = False,
+) -> PDFResult:
+    """Generate the complete final portrait PDF."""
+
+    parsed_date = _parse_date(
+        publication_date
     )
+
+    dataset = load_pdf_dataset(
+        parsed_date
+    )
+
+    issues = dataset["issues"]
+
+    recall_sets = resolve_recall_sets(
+        dataset=dataset,
+        publication_date=parsed_date,
+    )
+
+    issue_count = len(issues)
+    page_count = (
+        issue_count + 1
+    ) // 2
+
+    final_pdf_path = get_final_pdf_path(
+        parsed_date
+    )
+
+    if final_pdf_path.exists() and not overwrite:
+        raise PDFAlreadyExistsError(
+            "The final PDF already exists:\n"
+            f"{final_pdf_path}\n"
+            "Use --overwrite when intentionally rebuilding it."
+        )
+
+    final_pdf_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    temporary_pdf_path = (
+        final_pdf_path.with_suffix(".pdf.tmp")
+    )
+
+    if temporary_pdf_path.exists():
+        temporary_pdf_path.unlink()
 
     pdf = canvas.Canvas(
-        str(output_file),
+        str(temporary_pdf_path),
         pagesize=(
             PAGE_WIDTH,
             PAGE_HEIGHT,
         ),
+        pageCompression=1,
     )
 
     pdf.setTitle(
-        f"{PDF_TITLE} - {book.formatted_date}"
+        "Today's UPSC Issues"
     )
 
     pdf.setAuthor(
-        PDF_AUTHOR
+        "UPSC Issues by Kumar"
     )
 
     pdf.setSubject(
-        PDF_SUBJECT
+        f"Daily UPSC Issues — "
+        f"{_display_date(parsed_date)}"
     )
 
     pdf.setCreator(
-        "Today's UPSC Issues Publishing System"
+        "Today's UPSC Issues Version 2.0"
     )
 
     try:
-        for page_index in range(
-            TOTAL_PAGES
-        ):
-            start_index = (
-                page_index
-                * ISSUES_PER_PAGE
-            )
+        for page_index in range(page_count):
+            start_index = page_index * 2
+            end_index = start_index + 2
 
-            end_index = (
-                start_index
-                + ISSUES_PER_PAGE
-            )
-
-            page_issues = book.issues[
+            issues_on_page = issues[
                 start_index:end_index
             ]
 
-            draw_publication_page(
+            recall_sets_on_page = recall_sets[
+                start_index:end_index
+            ]
+
+            render_page(
                 pdf=pdf,
-                book=book,
-                page_number=page_index + 1,
-                page_issues=page_issues,
+                issues_on_page=issues_on_page,
+                recall_sets_on_page=recall_sets_on_page,
+                first_issue_number=(
+                    start_index + 1
+                ),
+                publication_date=parsed_date,
+                page_number=(
+                    page_index + 1
+                ),
+                total_pages=page_count,
             )
 
             pdf.showPage()
@@ -426,125 +889,149 @@ def generate_pdf(
         pdf.save()
 
     except Exception:
-        # Do not leave a misleading partial output behind.
         try:
             pdf.save()
         except Exception:
             pass
 
-        if output_file.exists():
-            try:
-                output_file.unlink()
-            except OSError:
-                pass
+        if temporary_pdf_path.exists():
+            temporary_pdf_path.unlink()
 
         raise
 
-    if not output_file.exists():
-        raise RuntimeError(
-            "PDF generation finished without creating "
-            "the output file."
-        )
+    if final_pdf_path.exists():
+        final_pdf_path.unlink()
 
-    if output_file.stat().st_size == 0:
-        output_file.unlink(
-            missing_ok=True
-        )
+    temporary_pdf_path.replace(
+        final_pdf_path
+    )
 
-        raise RuntimeError(
-            "Generated PDF is empty."
-        )
+    result = PDFResult(
+        publication_date=_display_date(
+            parsed_date
+        ),
+        pdf_path=final_pdf_path,
+        issue_count=issue_count,
+        page_count=page_count,
+        document_code=_document_code(
+            parsed_date
+        ),
+    )
 
-    return output_file
+    if open_after_generation:
+        open_pdf(final_pdf_path)
+
+    return result
 
 
-# ==========================================================
+# ============================================================
 # OPEN PDF
-# ==========================================================
+# ============================================================
 
-def open_generated_pdf(
-    pdf_path: str | Path,
-) -> None:
-    """
-    Open the generated PDF using the Windows default viewer.
-    """
+def open_pdf(pdf_path: Path) -> None:
+    """Open the generated PDF using the operating system."""
 
-    path = Path(pdf_path)
-
-    if not path.is_file():
-        raise FileNotFoundError(
-            f"Generated PDF not found:\n{path}"
+    if not pdf_path.exists():
+        raise PDFGeneratorError(
+            f"Cannot open missing PDF:\n{pdf_path}"
         )
-
-    if os.name != "nt":
-        print(
-            "Automatic PDF opening is available "
-            "on Windows only."
-        )
-        return
 
     try:
-        os.startfile(
-            str(path)
-        )
+        if os.name == "nt":
+            os.startfile(pdf_path)  # type: ignore[attr-defined]
+
+        elif sys.platform == "darwin":
+            os.system(
+                f'open "{pdf_path}"'
+            )
+
+        else:
+            os.system(
+                f'xdg-open "{pdf_path}"'
+            )
 
     except OSError as error:
-        print(
-            "PDF generated successfully, but it could "
-            f"not be opened automatically: {error}"
+        raise PDFGeneratorError(
+            f"PDF generated, but could not be opened:\n"
+            f"{pdf_path}\n{error}"
+        ) from error
+
+
+# ============================================================
+# COMMAND-LINE ARGUMENTS
+# ============================================================
+
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create command-line arguments."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate the final Today's UPSC Issues "
+            "portrait PDF."
         )
+    )
+
+    parser.add_argument(
+        "publication_date",
+        nargs="?",
+        default=date.today().isoformat(),
+        help=(
+            "Publication date. Examples: "
+            "2026-07-19 or 19-07-26"
+        ),
+    )
+
+    parser.add_argument(
+        "--overwrite",
+        "-o",
+        action="store_true",
+        help="Replace an existing final PDF.",
+    )
+
+    parser.add_argument(
+        "--open",
+        action="store_true",
+        dest="open_after_generation",
+        help="Open the PDF after successful generation.",
+    )
+
+    return parser
 
 
-# ==========================================================
-# DEVELOPMENT ENTRY POINT
-# ==========================================================
+# ============================================================
+# MAIN
+# ============================================================
 
 def main() -> None:
-    """
-    Read, validate, parse and generate the current daily PDF.
-    """
+    """Run the final PDF generator."""
 
-    from src.parser import parse_validated_dataset
-    from src.reader import read_today_dataset
-    from src.validator import (
-        print_validation_report,
-        validate_dataset,
-    )
+    parser = create_argument_parser()
+    arguments = parser.parse_args()
 
-    raw_dataset = read_today_dataset()
-
-    validation_result = validate_dataset(
-        raw_dataset
-    )
-
-    print_validation_report(
-        validation_result
-    )
-
-    if not validation_result["is_valid"]:
-        raise ValueError(
-            "PDF generation stopped because "
-            "dataset validation failed."
+    try:
+        result = generate_final_pdf(
+            publication_date=arguments.publication_date,
+            overwrite=arguments.overwrite,
+            open_after_generation=(
+                arguments.open_after_generation
+            ),
         )
 
-    book = parse_validated_dataset(
-        raw_dataset
-    )
+        result.display()
 
-    generated_file = generate_pdf(
-        book
-    )
+    except PDFGeneratorError as error:
+        print("=" * 64)
+        print("TODAY'S UPSC ISSUES")
+        print("FINAL PDF GENERATION ERROR")
+        print("=" * 64)
+        print(error)
+        print("=" * 64)
+        raise SystemExit(1) from error
 
-    print("=" * 60)
-    print("TODAY'S UPSC ISSUES — PDF GENERATOR")
-    print("=" * 60)
-    print("PDF generated successfully:")
-    print(generated_file.resolve())
-    print("=" * 60)
-
-    open_generated_pdf(
-        generated_file
-    )
+    except KeyboardInterrupt:
+        print()
+        print("PDF generation was cancelled.")
+        raise SystemExit(130)
 
 
 if __name__ == "__main__":

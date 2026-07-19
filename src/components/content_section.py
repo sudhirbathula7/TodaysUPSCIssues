@@ -2,17 +2,17 @@
 ============================================================
 Today's UPSC Issues
 Five Content Sections Component
-Line Layout with Section Icons
+Version 2.0
 Created by Sudhir
 ============================================================
 
 Draws the five locked learning sections:
 
-1. Core Issue
-2. What's Happening?
-3. Why It Matters
-4. Key Challenges
-5. The Way Forward
+1. Current Context
+2. Why It Matters for UPSC
+3. Core Concept
+4. Challenges
+5. Way Forward
 
 Design:
 
@@ -47,11 +47,11 @@ from src.styles import BOLD_FONT, COLOURS, FONTS
 # ==========================================================
 
 LOCKED_HEADINGS = (
-    "Core Issue",
-    "What's Happening?",
-    "Why It Matters",
-    "Key Challenges",
-    "The Way Forward",
+    "Current Context",
+    "Why It Matters for UPSC",
+    "Core Concept",
+    "Challenges",
+    "Way Forward",
 )
 
 
@@ -68,24 +68,26 @@ SECTION_ICON_DIR = (
     / "sections"
 )
 
+# Existing Version 1.0 icon files are reused.
+# Only the displayed section headings have changed.
 SECTION_ICONS = {
-    "Core Issue": (
-        SECTION_ICON_DIR
-        / "core_issue.svg"
-    ),
-    "What's Happening?": (
+    "Current Context": (
         SECTION_ICON_DIR
         / "happening.svg"
     ),
-    "Why It Matters": (
+    "Why It Matters for UPSC": (
         SECTION_ICON_DIR
         / "why_matters.svg"
     ),
-    "Key Challenges": (
+    "Core Concept": (
+        SECTION_ICON_DIR
+        / "core_issue.svg"
+    ),
+    "Challenges": (
         SECTION_ICON_DIR
         / "challenges.svg"
     ),
-    "The Way Forward": (
+    "Way Forward": (
         SECTION_ICON_DIR
         / "way_forward.svg"
     ),
@@ -98,9 +100,7 @@ SECTION_ICONS = {
 
 @dataclass(frozen=True, slots=True)
 class ContentSection:
-    """
-    Represents one learning section.
-    """
+    """Represents one learning section."""
 
     heading: str
     text: str
@@ -146,7 +146,6 @@ HEADING_TEXT_GAP = 3.0
 
 DIVIDER_GAP_ABOVE = 2.0
 DIVIDER_GAP_BELOW = 2.0
-
 SECTION_GAP = 4.0
 
 DIVIDER_LINE_WIDTH = 0.30
@@ -161,9 +160,7 @@ def _create_heading_style(
     font_size: float,
     leading: float,
 ) -> ParagraphStyle:
-    """
-    Create the section heading style.
-    """
+    """Create the section-heading paragraph style."""
 
     return ParagraphStyle(
         name=f"content_heading_{font_size:.1f}",
@@ -184,9 +181,7 @@ def _create_body_style(
     font_size: float,
     leading: float,
 ) -> ParagraphStyle:
-    """
-    Create the explanation text style.
-    """
+    """Create the explanation paragraph style."""
 
     return ParagraphStyle(
         name=f"content_body_{font_size:.1f}",
@@ -207,9 +202,7 @@ def _create_body_style(
 # BODY MARKUP
 # ==========================================================
 
-def _prepare_body_text(
-    text: str,
-) -> str:
+def _prepare_body_text(text: str) -> str:
     """
     Escape body text while preserving supported bold tags.
 
@@ -258,38 +251,30 @@ def _prepare_body_text(
 def _normalise_sections(
     sections,
 ) -> tuple[ContentSection, ...]:
-    """
-    Convert input into validated ContentSection objects.
-    """
+    """Convert input into validated ContentSection objects."""
+
+    if not isinstance(sections, (list, tuple)):
+        raise TypeError(
+            "Content sections must be supplied as a list or tuple."
+        )
 
     if len(sections) != 5:
         raise ValueError(
-            "The content area must contain exactly "
-            "five sections."
+            "The content area must contain exactly five sections."
         )
 
     normalised: list[ContentSection] = []
 
     for item in sections:
-
-        if isinstance(
-            item,
-            ContentSection,
-        ):
+        if isinstance(item, ContentSection):
             section = item
-
         else:
             try:
                 heading, text = item
-
-            except (
-                TypeError,
-                ValueError,
-            ) as error:
+            except (TypeError, ValueError) as error:
                 raise ValueError(
-                    "Each content section must be a "
-                    "ContentSection or a two-item "
-                    "(heading, text) tuple."
+                    "Each content section must be a ContentSection "
+                    "or a two-item (heading, text) tuple."
                 ) from error
 
             section = ContentSection(
@@ -323,15 +308,17 @@ def _normalise_sections(
     )
 
     if received_headings != LOCKED_HEADINGS:
-        raise ValueError(
-            "Content headings must follow the locked order:\n"
-            + "\n".join(
-                f"{index}. {heading}"
-                for index, heading in enumerate(
-                    LOCKED_HEADINGS,
-                    start=1,
-                )
+        required_order = "\n".join(
+            f"{index}. {heading}"
+            for index, heading in enumerate(
+                LOCKED_HEADINGS,
+                start=1,
             )
+        )
+
+        raise ValueError(
+            "Content headings must follow the locked "
+            f"Version 2.0 order:\n{required_order}"
         )
 
     return tuple(normalised)
@@ -358,9 +345,7 @@ def _build_paragraphs(
         float,
     ]
 ]:
-    """
-    Build heading and body paragraphs for all sections.
-    """
+    """Build heading and body paragraphs for all sections."""
 
     heading_style = _create_heading_style(
         font_size=heading_font_size,
@@ -375,7 +360,6 @@ def _build_paragraphs(
     paragraph_data = []
 
     for section in sections:
-
         heading_paragraph = Paragraph(
             html_escape(
                 section.heading,
@@ -384,25 +368,19 @@ def _build_paragraphs(
             heading_style,
         )
 
-        _, heading_height = (
-            heading_paragraph.wrap(
-                heading_width,
-                1000,
-            )
+        _, heading_height = heading_paragraph.wrap(
+            heading_width,
+            1000,
         )
 
         body_paragraph = Paragraph(
-            _prepare_body_text(
-                section.text
-            ),
+            _prepare_body_text(section.text),
             body_style,
         )
 
-        _, body_height = (
-            body_paragraph.wrap(
-                body_width,
-                1000,
-            )
+        _, body_height = body_paragraph.wrap(
+            body_width,
+            1000,
         )
 
         paragraph_data.append(
@@ -425,13 +403,10 @@ def _build_paragraphs(
 def _calculate_total_height(
     paragraph_data,
 ) -> float:
-    """
-    Calculate the complete required vertical height.
-    """
+    """Calculate the complete required vertical height."""
 
     text_height = sum(
-        heading_height
-        + body_height
+        heading_height + body_height
         for (
             _,
             _,
@@ -472,9 +447,7 @@ def _fit_content(
     body_width: float,
     available_height: float,
 ):
-    """
-    Reduce font sizes gradually until all content fits.
-    """
+    """Reduce font sizes until all content fits safely."""
 
     heading_font_size = HEADING_FONT_SIZE
     heading_leading = HEADING_LEADING
@@ -483,7 +456,6 @@ def _fit_content(
     body_leading = BODY_LEADING
 
     while True:
-
         paragraph_data = _build_paragraphs(
             sections=sections,
             heading_width=heading_width,
@@ -494,10 +466,8 @@ def _fit_content(
             body_leading=body_leading,
         )
 
-        required_height = (
-            _calculate_total_height(
-                paragraph_data
-            )
+        required_height = _calculate_total_height(
+            paragraph_data
         )
 
         if required_height <= available_height:
@@ -516,18 +486,14 @@ def _fit_content(
             > MIN_HEADING_FONT_SIZE
         )
 
-        if (
-            not can_reduce_body
-            and not can_reduce_heading
-        ):
+        if not can_reduce_body and not can_reduce_heading:
             raise ValueError(
-                "The five content sections do not fit "
-                "inside the available content area. "
-                "Reduce the explanation lengths."
+                "The five content sections do not fit inside "
+                "the available content area. Reduce the "
+                "explanation lengths."
             )
 
         if can_reduce_body:
-
             body_font_size = max(
                 MIN_BODY_FONT_SIZE,
                 body_font_size
@@ -541,7 +507,6 @@ def _fit_content(
             )
 
         if can_reduce_heading:
-
             heading_font_size = max(
                 MIN_HEADING_FONT_SIZE,
                 heading_font_size
@@ -565,18 +530,28 @@ def draw_content_sections(
     sections,
 ) -> None:
     """
-    Draw the five learning sections using:
+    Draw the five Version 2.0 learning sections.
 
-    - SVG heading icons
-    - Title Case headings
-    - Full-width explanations
-    - Thin horizontal dividers
+    Each section contains:
+
+    - SVG icon
+    - Heading
+    - Full-width explanation
+    - Divider below, except after the final section
     """
 
-    normalised_sections = (
-        _normalise_sections(
-            sections
+    if pdf is None:
+        raise ValueError(
+            "Content section PDF canvas cannot be None."
         )
+
+    if box is None:
+        raise ValueError(
+            "Content section box cannot be None."
+        )
+
+    normalised_sections = _normalise_sections(
+        sections
     )
 
     content_x = (
@@ -727,10 +702,7 @@ def draw_content_sections(
             # DIVIDER
             # ------------------------------------------
 
-            if index < (
-                len(paragraph_data) - 1
-            ):
-
+            if index < len(paragraph_data) - 1:
                 divider_y = (
                     cursor_y
                     - DIVIDER_GAP_ABOVE
@@ -765,11 +737,10 @@ def draw_content_sections(
 # ==========================================================
 
 if __name__ == "__main__":
-
     print("=" * 64)
     print(
         "TODAY'S UPSC ISSUES — "
-        "CONTENT SECTIONS WITH ICONS"
+        "VERSION 2.0 CONTENT SECTIONS"
     )
     print("=" * 64)
 
@@ -777,9 +748,7 @@ if __name__ == "__main__":
         LOCKED_HEADINGS,
         start=1,
     ):
-        icon_path = SECTION_ICONS[
-            heading
-        ]
+        icon_path = SECTION_ICONS[heading]
 
         status = (
             "FOUND"
@@ -788,13 +757,13 @@ if __name__ == "__main__":
         )
 
         print(
-            f"{number}. {heading}"
-            f" — {status}"
+            f"{number}. {heading} — {status}"
         )
 
     print("-" * 64)
-    print("✓ SVG heading icons enabled")
-    print("✓ Full-width explanations retained")
-    print("✓ Thin divider lines enabled")
+    print("✓ Version 2.0 headings enabled")
+    print("✓ Existing SVG icons reused")
+    print("✓ Bold keyword support enabled")
     print("✓ Automatic text fitting enabled")
+    print("✓ Overflow protection enabled")
     print("=" * 64)

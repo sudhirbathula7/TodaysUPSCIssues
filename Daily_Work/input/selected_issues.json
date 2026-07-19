@@ -1,0 +1,36 @@
+{
+  "publication_date": "2026-07-19",
+  "selected_issues": [
+    {
+      "title": "India's Semiconductor Ecosystem",
+      "gs_paper": "GS III",
+      "rating": "4.9/5",
+      "current_context": "India is expanding semiconductor manufacturing, design and packaging capabilities.",
+      "why_it_matters_for_upsc": "The issue connects industrial policy, national security, technology and global supply chains.",
+      "core_concept": "A semiconductor ecosystem includes design, fabrication, packaging, testing, equipment and skilled manpower.",
+      "challenges": "High capital requirements, imported technology and a shortage of advanced manufacturing expertise remain major barriers.",
+      "way_forward": "India must strengthen research, skills, domestic design, industry-academia collaboration and supply-chain resilience.",
+      "quick_facts": [
+         "Semiconductors are essential components of electronic devices.",
+          "Chip fabrication requires highly specialised facilities.",
+          "The semiconductor value chain includes design, fabrication, packaging and testing.",
+            "Advanced chip manufacturing requires large capital investment and skilled manpower."
+        ],
+      "what_upsc_asks": "Examine how semiconductor manufacturing supports technological self-reliance and national security.",
+      "key_takeaway": "India needs a complete semiconductor ecosystem rather than isolated fabrication investments.",
+      "recall_questions": [
+        "What constitutes a semiconductor ecosystem?",
+        "What limits India's domestic chip manufacturing capacity?"
+      ],
+      "youtube_short_script": "India does not merely need chip factories. It needs an integrated ecosystem covering design, fabrication, testing, skills and research.",
+      "anchors": [
+        "Chip design",
+        "Fabrication plant",
+        "Supply-chain resilience"
+      ],
+      "telegram_caption": "Recall today's semiconductor issue through these two questions.",
+      "website_heading": "India's semiconductor push and the challenge of building a complete domestic chip ecosystem"
+    }
+  ],
+  "source_files": []
+}

@@ -188,7 +188,8 @@ def validate_issue_count(
     result: dict[str, Any],
 ) -> None:
     """
-    Confirms that exactly four selected issues are present.
+
+     Confirms that three or four selected issues are present.
     """
 
     issues = dataset.get("issues", [])

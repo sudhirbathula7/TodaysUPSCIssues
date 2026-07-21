@@ -1,0 +1,27 @@
+{
+  "version": "3.0",
+  "production_date": "2026-07-21",
+  "edition_code": "TUI-260721",
+  "status": "content_prompt_ready",
+  "selected_issue_numbers": [
+    1,
+    2,
+    3
+  ],
+  "completed_stages": [
+    "selection_prompt",
+    "issues_selected",
+    "content_prompt"
+  ],
+  "failed_stage": null,
+  "error_message": null,
+  "created_at": "2026-07-21T12:36:24+05:30",
+  "updated_at": "2026-07-21T17:34:07+05:30",
+  "metadata": {
+    "editorials_copied": true,
+    "editorials_source": "F:\\Personal Projects\\TodaysUPSCIssues\\Daily_Work\\input\\todays_editorials.txt",
+    "editorials_file": "F:\\Personal Projects\\TodaysUPSCIssues\\production\\sessions\\2026-07-21\\input\\todays_editorials.txt",
+    "issue_selection_prompt": "F:\\Personal Projects\\TodaysUPSCIssues\\production\\sessions\\2026-07-21\\prompts\\01_issue_selection_prompt.txt",
+    "final_content_prompt": "F:\\Personal Projects\\TodaysUPSCIssues\\production\\sessions\\2026-07-21\\prompts\\02_final_content_prompt.txt"
+  }
+}

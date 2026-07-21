@@ -1,0 +1,13 @@
+{
+  "validator_version": "3.0",
+  "validated_at": "2026-07-21T12:48:22+05:30",
+  "source_file": "F:\\Personal Projects\\TodaysUPSCIssues\\production\\templates\\generated_content_sample.json",
+  "is_valid": true,
+  "production_date": "2026-07-21",
+  "edition_code": "TUI-260721",
+  "issue_count": 2,
+  "error_count": 0,
+  "warning_count": 0,
+  "errors": [],
+  "warnings": []
+}

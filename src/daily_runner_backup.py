@@ -2,32 +2,37 @@
 ============================================================
 TODAY'S UPSC ISSUES
 DAILY PRODUCTION RUNNER
-Version 2.1
+Version 2.0
 Created by Sudhir
 ============================================================
 
 PURPOSE
 
-Runs the complete daily production workflow using one command.
+Runs the complete daily production workflow through one command.
 
 PRODUCTION STAGES
 
-1. Repository generation
-2. Knowledge intelligence
-3. Publication output generation
-4. Final PDF generation
+1. Read and validate the selected daily issues.
+2. Generate the permanent repository package.
+3. Generate platform-ready publication outputs.
+4. Generate the final portrait PDF.
+5. Display the complete production summary.
 
-DEFAULT INPUT
+DEFAULT INPUT FILE
 
 Daily_Work/input/selected_issues.json
 
 NORMAL COMMAND
 
-python src/daily_runner.py 2026-07-20
+python src/daily_runner.py 2026-07-19
+
+REBUILD COMMAND
+
+python src/daily_runner.py 2026-07-19 --overwrite
 
 REBUILD AND OPEN PDF
 
-python src/daily_runner.py 2026-07-20 --overwrite --open-pdf
+python src/daily_runner.py 2026-07-19 --overwrite --open-pdf
 ============================================================
 """
 
@@ -56,11 +61,6 @@ if str(PROJECT_ROOT) not in sys.path:
 # PROJECT MODULES
 # ============================================================
 
-from src.intelligence.knowledge_engine import (  # noqa: E402
-    KnowledgeAnalysis,
-    KnowledgeEngineError,
-    analyze_issue_id,
-)
 from src.output_generator import (  # noqa: E402
     OutputGeneratorError,
     OutputResult,
@@ -90,13 +90,6 @@ DEFAULT_SELECTED_ISSUES_FILE = (
     / "selected_issues.json"
 )
 
-REPOSITORY_ROOT = PROJECT_ROOT / "Repository"
-
-INTELLIGENCE_ROOT = (
-    REPOSITORY_ROOT
-    / "intelligence"
-)
-
 
 # ============================================================
 # EXCEPTIONS
@@ -121,28 +114,16 @@ class DailyRunResult:
     publication_date: str
     input_file: Path
     repository_result: RepositoryResult
-    intelligence_results: tuple[KnowledgeAnalysis, ...]
     output_result: OutputResult
     pdf_result: PDFResult
 
     def display(self) -> None:
-        """Display the final daily production summary."""
-
-        duplicate_count = sum(
-            1
-            for analysis in self.intelligence_results
-            if analysis.duplicate_scan.possible_duplicate
-        )
-
-        related_count = sum(
-            len(analysis.related_issues)
-            for analysis in self.intelligence_results
-        )
+        """Display the final professional production summary."""
 
         print()
         print("=" * 68)
         print("TODAY'S UPSC ISSUES")
-        print("VERSION 2.1 — DAILY PRODUCTION COMPLETED")
+        print("VERSION 2.0 — DAILY PRODUCTION COMPLETED")
         print("=" * 68)
 
         print(
@@ -171,34 +152,12 @@ class DailyRunResult:
         )
 
         print("-" * 68)
-        print("INTELLIGENCE SUMMARY")
 
-        print(
-            f"Reports generated    : "
-            f"{len(self.intelligence_results)}"
-        )
-
-        print(
-            f"Possible duplicates  : "
-            f"{duplicate_count}"
-        )
-
-        print(
-            f"Related issue links  : "
-            f"{related_count}"
-        )
-
-        print("-" * 68)
         print("PRODUCTION STATUS")
-
         print("✓ Repository package generated")
         print("✓ Issue index updated")
-        print("✓ Recall index updated")
+        print("✓ Recall schedule updated")
         print("✓ Usage index updated")
-        print("✓ Repository intelligence generated")
-        print("✓ Duplicate analysis completed")
-        print("✓ Related issue recommendations prepared")
-        print("✓ Spaced recall schedules registered")
         print("✓ PDF dataset prepared")
         print("✓ YouTube Shorts content prepared")
         print("✓ Telegram card content prepared")
@@ -211,13 +170,6 @@ class DailyRunResult:
         print("REPOSITORY")
         print(
             self.repository_result.daily_folder
-        )
-
-        print()
-        print("INTELLIGENCE")
-        print(
-            INTELLIGENCE_ROOT
-            / self.publication_date
         )
 
         print()
@@ -252,16 +204,13 @@ def _parse_date(
     if isinstance(value, date):
         return value
 
-    cleaned = str(
-        value
-    ).strip()
+    cleaned = str(value).strip()
 
     supported_formats = (
         "%Y-%m-%d",
         "%d-%m-%y",
         "%d-%m-%Y",
         "%d/%m/%Y",
-        "%d/%m/%y",
         "%d %B %Y",
         "%d %b %Y",
     )
@@ -279,18 +228,18 @@ def _parse_date(
     raise DailyInputError(
         "Unsupported publication date.\n"
         "Use one of these formats:\n"
-        "2026-07-20\n"
-        "20-07-26\n"
-        "20-07-2026\n"
-        "20/07/2026\n"
-        "20 July 2026"
+        "2026-07-19\n"
+        "19-07-26\n"
+        "19-07-2026\n"
+        "19/07/2026\n"
+        "19 July 2026"
     )
 
 
 def _display_date(
     publication_date: date,
 ) -> str:
-    """Return the locked DD-MM-YY format."""
+    """Return the locked DD-MM-YY display format."""
 
     return publication_date.strftime(
         "%d-%m-%y"
@@ -301,9 +250,7 @@ def _display_date(
 # JSON HELPERS
 # ============================================================
 
-def _read_json(
-    path: Path,
-) -> Any:
+def _read_json(path: Path) -> Any:
     """Read a UTF-8 JSON file."""
 
     if not path.exists():
@@ -335,38 +282,6 @@ def _read_json(
         ) from error
 
 
-def _write_json(
-    path: Path,
-    data: Any,
-) -> None:
-    """Write JSON safely using a temporary file."""
-
-    path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    temporary_path = path.with_suffix(
-        path.suffix + ".tmp"
-    )
-
-    with temporary_path.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        json.dump(
-            data,
-            file,
-            indent=2,
-            ensure_ascii=False,
-        )
-        file.write("\n")
-
-    temporary_path.replace(
-        path
-    )
-
-
 # ============================================================
 # PATH HELPERS
 # ============================================================
@@ -382,15 +297,10 @@ def _resolve_input_path(
             .resolve()
         )
 
-    path = Path(
-        value
-    ).expanduser()
+    path = Path(value).expanduser()
 
     if not path.is_absolute():
-        path = (
-            PROJECT_ROOT
-            / path
-        )
+        path = PROJECT_ROOT / path
 
     return path.resolve()
 
@@ -399,7 +309,14 @@ def _resolve_source_path(
     value: str | Path,
     input_file: Path,
 ) -> Path:
-    """Resolve an optional editorial source file."""
+    """
+    Resolve an optional editorial source path.
+
+    Relative paths are checked against:
+
+    1. The selected-issues file folder.
+    2. The project root.
+    """
 
     source_path = Path(
         value
@@ -429,7 +346,29 @@ def _resolve_source_path(
 def load_daily_input(
     input_file: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Load the selected daily issue input."""
+    """
+    Load the selected daily issue input.
+
+    Supported JSON structures:
+
+    Structure 1:
+    {
+      "publication_date": "2026-07-19",
+      "selected_issues": [...]
+    }
+
+    Structure 2:
+    {
+      "publication_date": "2026-07-19",
+      "issues": [...]
+    }
+
+    Structure 3:
+    [
+      {...},
+      {...}
+    ]
+    """
 
     resolved_path = _resolve_input_path(
         input_file
@@ -443,16 +382,10 @@ def load_daily_input(
     selected_issues: Any = None
     source_files: Any = []
 
-    if isinstance(
-        raw_data,
-        list,
-    ):
+    if isinstance(raw_data, list):
         selected_issues = raw_data
 
-    elif isinstance(
-        raw_data,
-        dict,
-    ):
+    elif isinstance(raw_data, dict):
         publication_date_value = (
             raw_data.get(
                 "publication_date"
@@ -503,37 +436,26 @@ def load_daily_input(
             "The selected issue list is empty."
         )
 
-    if len(
-        selected_issues
-    ) > 8:
+    if len(selected_issues) > 8:
         raise DailyInputError(
             "The daily input contains more than eight "
-            "issues. The Version 2.1 maximum is eight."
+            "issues. The Version 2.0 maximum is eight."
         )
 
     for issue_number, issue in enumerate(
         selected_issues,
         start=1,
     ):
-        if not isinstance(
-            issue,
-            dict,
-        ):
+        if not isinstance(issue, dict):
             raise DailyInputError(
                 f"Issue {issue_number} must be "
                 "a JSON object."
             )
 
         title = (
-            issue.get(
-                "title"
-            )
-            or issue.get(
-                "issue_title"
-            )
-            or issue.get(
-                "issue"
-            )
+            issue.get("title")
+            or issue.get("issue_title")
+            or issue.get("issue")
         )
 
         if not str(
@@ -558,9 +480,7 @@ def load_daily_input(
                 "must be a list."
             )
 
-        if len(
-            quick_facts
-        ) != 4:
+        if len(quick_facts) != 4:
             raise DailyInputError(
                 f"Issue {issue_number} must contain "
                 "exactly four Quick Facts."
@@ -576,13 +496,11 @@ def load_daily_input(
             list,
         ):
             raise DailyInputError(
-                f"Issue {issue_number} Recall Questions "
+                f"Issue {issue_number} recall questions "
                 "must be a list."
             )
 
-        if len(
-            recall_questions
-        ) != 2:
+        if len(recall_questions) != 2:
             raise DailyInputError(
                 f"Issue {issue_number} must contain "
                 "exactly two Recall Questions."
@@ -638,7 +556,15 @@ def resolve_publication_date(
     command_line_date: str | None,
     input_date: str | None,
 ) -> date:
-    """Resolve the final publication date."""
+    """
+    Resolve the final publication date.
+
+    Priority:
+
+    1. Command-line date.
+    2. Date inside selected_issues.json.
+    3. Today's date.
+    """
 
     if command_line_date:
         parsed_command_date = _parse_date(
@@ -673,134 +599,6 @@ def resolve_publication_date(
 
 
 # ============================================================
-# INTELLIGENCE REPORT GENERATION
-# ============================================================
-
-def generate_daily_intelligence(
-    issue_ids: tuple[str, ...],
-    publication_date: date,
-    overwrite: bool = True,
-) -> tuple[KnowledgeAnalysis, ...]:
-    """Analyse daily issues and save intelligence reports."""
-
-    display_date = _display_date(
-        publication_date
-    )
-
-    intelligence_folder = (
-        INTELLIGENCE_ROOT
-        / display_date
-    )
-
-    intelligence_folder.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    analyses: list[
-        KnowledgeAnalysis
-    ] = []
-
-    for issue_id in issue_ids:
-        analysis = analyze_issue_id(
-            issue_id=issue_id,
-            maximum_related_issues=5,
-            minimum_related_similarity=50.0,
-            maximum_reusable_items=10,
-            register_recall=True,
-            overwrite_recall_schedule=overwrite,
-        )
-
-        report_path = (
-            intelligence_folder
-            / f"{issue_id}_intelligence.json"
-        )
-
-        _write_json(
-            path=report_path,
-            data=analysis.to_dict(),
-        )
-
-        analyses.append(
-            analysis
-        )
-
-    summary = {
-        "intelligence_version": "2.1",
-        "publication_date": display_date,
-        "issue_count": len(
-            analyses
-        ),
-        "possible_duplicate_count": sum(
-            1
-            for analysis in analyses
-            if (
-                analysis
-                .duplicate_scan
-                .possible_duplicate
-            )
-        ),
-        "related_issue_count": sum(
-            len(
-                analysis.related_issues
-            )
-            for analysis in analyses
-        ),
-        "issues": [
-            {
-                "issue_id": (
-                    analysis.issue_id
-                ),
-                "title": (
-                    analysis.title
-                ),
-                "highest_similarity": (
-                    analysis
-                    .duplicate_scan
-                    .highest_similarity
-                ),
-                "classification": (
-                    analysis
-                    .duplicate_scan
-                    .overall_classification
-                ),
-                "possible_duplicate": (
-                    analysis
-                    .duplicate_scan
-                    .possible_duplicate
-                ),
-                "related_issue_count": len(
-                    analysis.related_issues
-                ),
-                "reusable_fact_count": len(
-                    analysis.reusable_facts
-                ),
-                "reusable_question_count": len(
-                    analysis
-                    .reusable_recall_questions
-                ),
-                "reusable_anchor_count": len(
-                    analysis.reusable_anchors
-                ),
-            }
-            for analysis in analyses
-        ],
-    }
-
-    _write_json(
-        path=(
-            intelligence_folder
-            / "intelligence_summary.json"
-        ),
-        data=summary,
-    )
-
-    return tuple(
-        analyses
-    )
-
-
-# ============================================================
 # COMPLETE DAILY WORKFLOW
 # ============================================================
 
@@ -815,7 +613,15 @@ def run_daily_production(
     overwrite: bool = False,
     open_pdf: bool = False,
 ) -> DailyRunResult:
-    """Run the complete Version 2.1 workflow."""
+    """
+    Run the complete Version 2.0 production workflow.
+
+    Stages:
+
+    1. Repository generation.
+    2. Platform output generation.
+    3. Final PDF generation.
+    """
 
     daily_input = load_daily_input(
         input_file
@@ -858,7 +664,7 @@ def run_daily_production(
 
     print("=" * 68)
     print("TODAY'S UPSC ISSUES")
-    print("VERSION 2.1 — DAILY PRODUCTION")
+    print("VERSION 2.0 — DAILY PRODUCTION")
     print("=" * 68)
 
     print(
@@ -892,22 +698,24 @@ def run_daily_production(
     # STAGE 1 — REPOSITORY
     # --------------------------------------------------------
 
-    print("STAGE 1 / 4")
+    print("STAGE 1 / 3")
     print("REPOSITORY GENERATION")
 
-    repository_result = generate_repository_package(
-        publication_date=parsed_date,
-        selected_issues=(
-            daily_input[
-                "selected_issues"
-            ]
-        ),
-        source_files=(
-            daily_input[
-                "source_files"
-            ]
-        ),
-        overwrite_daily=overwrite,
+    repository_result = (
+        generate_repository_package(
+            publication_date=parsed_date,
+            selected_issues=(
+                daily_input[
+                    "selected_issues"
+                ]
+            ),
+            source_files=(
+                daily_input[
+                    "source_files"
+                ]
+            ),
+            overwrite_daily=overwrite,
+        )
     )
 
     print(
@@ -919,70 +727,17 @@ def run_daily_production(
     print("-" * 68)
 
     # --------------------------------------------------------
-    # STAGE 2 — KNOWLEDGE INTELLIGENCE
+    # STAGE 2 — PLATFORM OUTPUTS
     # --------------------------------------------------------
 
-    print("STAGE 2 / 4")
-    print("KNOWLEDGE INTELLIGENCE")
+    print("STAGE 2 / 3")
+    print("PUBLICATION OUTPUT GENERATION")
 
-    intelligence_results = (
-        generate_daily_intelligence(
-            issue_ids=(
-                repository_result.issue_ids
-            ),
+    output_result = (
+        generate_output_package(
             publication_date=parsed_date,
             overwrite=overwrite,
         )
-    )
-
-    duplicate_count = sum(
-        1
-        for analysis in intelligence_results
-        if (
-            analysis
-            .duplicate_scan
-            .possible_duplicate
-        )
-    )
-
-    related_count = sum(
-        len(
-            analysis.related_issues
-        )
-        for analysis in intelligence_results
-    )
-
-    print(
-        f"✓ Intelligence reports generated: "
-        f"{len(intelligence_results)}"
-    )
-
-    print(
-        f"✓ Possible duplicates detected: "
-        f"{duplicate_count}"
-    )
-
-    print(
-        f"✓ Related repository links found: "
-        f"{related_count}"
-    )
-
-    print(
-        "✓ Spaced recall schedules registered"
-    )
-
-    print("-" * 68)
-
-    # --------------------------------------------------------
-    # STAGE 3 — PLATFORM OUTPUTS
-    # --------------------------------------------------------
-
-    print("STAGE 3 / 4")
-    print("PUBLICATION OUTPUT GENERATION")
-
-    output_result = generate_output_package(
-        publication_date=parsed_date,
-        overwrite=overwrite,
     )
 
     print(
@@ -1002,10 +757,10 @@ def run_daily_production(
     print("-" * 68)
 
     # --------------------------------------------------------
-    # STAGE 4 — FINAL PDF
+    # STAGE 3 — FINAL PDF
     # --------------------------------------------------------
 
-    print("STAGE 4 / 4")
+    print("STAGE 3 / 3")
     print("FINAL PDF GENERATION")
 
     pdf_result = generate_final_pdf(
@@ -1024,22 +779,15 @@ def run_daily_production(
     return DailyRunResult(
         publication_date=display_date,
         input_file=(
-            daily_input[
-                "input_file"
-            ]
+            daily_input["input_file"]
         ),
         repository_result=(
             repository_result
         ),
-        intelligence_results=(
-            intelligence_results
-        ),
         output_result=(
             output_result
         ),
-        pdf_result=(
-            pdf_result
-        ),
+        pdf_result=pdf_result,
     )
 
 
@@ -1048,12 +796,12 @@ def run_daily_production(
 # ============================================================
 
 def create_argument_parser() -> argparse.ArgumentParser:
-    """Create the command-line parser."""
+    """Create the daily-runner command-line parser."""
 
     parser = argparse.ArgumentParser(
         description=(
             "Generate the complete Today's UPSC Issues "
-            "Version 2.1 daily edition."
+            "Version 2.0 daily edition."
         )
     )
 
@@ -1062,7 +810,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
         nargs="?",
         help=(
             "Publication date. Examples: "
-            "2026-07-20 or 20-07-26."
+            "2026-07-19 or 19-07-26. "
+            "Optional when the input file contains "
+            "publication_date."
         ),
     )
 
@@ -1083,8 +833,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "-o",
         action="store_true",
         help=(
-            "Replace existing repository, intelligence, "
-            "output and PDF files."
+            "Replace existing repository, output "
+            "and PDF files for the selected date."
         ),
     )
 
@@ -1105,7 +855,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
 # ============================================================
 
 def main() -> None:
-    """Run the complete daily workflow."""
+    """Run the complete daily production workflow."""
 
     parser = create_argument_parser()
     arguments = parser.parse_args()
@@ -1131,7 +881,6 @@ def main() -> None:
     except (
         DailyRunnerError,
         RepositoryError,
-        KnowledgeEngineError,
         OutputGeneratorError,
         PDFGeneratorError,
     ) as error:

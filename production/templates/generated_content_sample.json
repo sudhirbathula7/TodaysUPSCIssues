@@ -1,0 +1,168 @@
+{
+  "schema_version": "3.0",
+  "production": {
+    "production_date": "2026-07-21",
+    "edition_code": "TUI-260721",
+    "publication_name": "Today's UPSC Issues",
+    "issue_count": 2,
+    "generated_by": "ChatGPT"
+  },
+  "source_editorials": [
+    {
+      "source_id": "SRC-01",
+      "newspaper": "The Hindu",
+      "editorial_title": "Building India's Semiconductor Ecosystem",
+      "publication_date": "2026-07-21",
+      "author": null
+    },
+    {
+      "source_id": "SRC-02",
+      "newspaper": "Indian Express",
+      "editorial_title": "Strengthening Urban Climate Governance",
+      "publication_date": "2026-07-21",
+      "author": null
+    }
+  ],
+  "issues": [
+    {
+      "issue_number": 1,
+      "issue_id": "TUI-260721-01-INDIAS-SEMICONDUCTOR-ECOSYSTEM",
+      "title": "India's Semiconductor Ecosystem",
+      "slug": "indias-semiconductor-ecosystem",
+      "gs_paper": "GS III",
+      "syllabus_tags": [
+        "Science and Technology",
+        "Industrial Policy",
+        "Supply Chain Resilience"
+      ],
+      "rating": 4.8,
+      "source_ids": [
+        "SRC-01"
+      ],
+      "content": {
+        "current_context": "India is expanding semiconductor manufacturing, design, packaging and research capabilities through public incentives and industry partnerships.",
+        "why_it_matters": "Semiconductors influence economic security, digital infrastructure, defence preparedness, electronics manufacturing and India's position in global technology supply chains.",
+        "core_concept": "A semiconductor ecosystem includes chip design, fabrication, assembly, testing, equipment, materials, research institutions, skilled workers and supporting infrastructure.",
+        "challenges": "Major constraints include high capital requirements, dependence on foreign equipment, technology gaps, long project timelines, infrastructure needs and global competition for specialised talent.",
+        "way_forward": "India should combine manufacturing incentives with research investment, workforce development, reliable infrastructure, design support, international partnerships and long-term policy stability.",
+        "quick_facts": [
+          "Semiconductors are essential components in modern electronic systems.",
+          "Fabrication plants require high capital investment and specialised infrastructure.",
+          "Chip design, fabrication and packaging are distinct parts of the value chain.",
+          "Supply-chain resilience has become a strategic national priority."
+        ],
+        "what_upsc_asks": "UPSC may connect semiconductor policy with technological self-reliance, industrial development, strategic security, global supply chains and skilled human capital.",
+        "key_takeaway": "India must build an integrated semiconductor ecosystem rather than focus only on fabrication plants. Long-term success depends on research, skills, infrastructure and policy continuity."
+      },
+      "recall": {
+        "questions": [
+          "What are the major components of a semiconductor ecosystem?",
+          "Why is semiconductor manufacturing strategically important for India?"
+        ],
+        "anchors": [
+          "Design",
+          "Fabrication",
+          "Packaging",
+          "Research",
+          "Skills"
+        ]
+      },
+      "telegram": {
+        "card_title": "India's Semiconductor Ecosystem",
+        "card_points": [
+          "Semiconductors support digital, industrial and defence systems.",
+          "The ecosystem extends beyond fabrication to design and packaging.",
+          "Capital, technology, infrastructure and talent remain major constraints.",
+          "Research and long-term policy stability are essential."
+        ],
+        "recall_prompt": "Can India achieve chip self-reliance by focusing only on fabrication plants?"
+      },
+      "youtube": {
+        "hook": "Why are semiconductors now treated as a strategic national resource?",
+        "script": "Semiconductors power smartphones, vehicles, communication systems, artificial intelligence and defence equipment. India is therefore trying to develop domestic capabilities across chip design, manufacturing, packaging and research. However, semiconductor fabrication requires enormous capital, advanced equipment, reliable infrastructure and highly specialised talent. India's success will depend on building the entire ecosystem rather than creating isolated factories.",
+        "closing_question": "What should India prioritise first: fabrication capacity, chip design or semiconductor research?"
+      },
+      "website": {
+        "short_heading": "Building India's Complete Chip Ecosystem",
+        "summary": "India's semiconductor strategy must integrate manufacturing, design, research, skills and resilient supply chains."
+      }
+    },
+    {
+      "issue_number": 2,
+      "issue_id": "TUI-260721-02-URBAN-CLIMATE-GOVERNANCE",
+      "title": "Urban Climate Governance",
+      "slug": "urban-climate-governance",
+      "gs_paper": "GS II & GS III",
+      "syllabus_tags": [
+        "Urban Governance",
+        "Climate Resilience",
+        "Disaster Management"
+      ],
+      "rating": 4.7,
+      "source_ids": [
+        "SRC-02"
+      ],
+      "content": {
+        "current_context": "Rapid urbanisation and climate-related hazards are increasing pressure on Indian cities to improve planning, drainage, public infrastructure and local administrative capacity.",
+        "why_it_matters": "Weak urban governance affects public health, economic productivity, disaster resilience, environmental sustainability and the quality of life of millions of citizens.",
+        "core_concept": "Urban climate governance involves coordinating land-use planning, municipal finance, infrastructure, disaster preparedness, environmental regulation and citizen participation.",
+        "challenges": "Cities face fragmented authority, limited municipal revenue, weak technical capacity, outdated planning systems, infrastructure deficits and inadequate coordination among agencies.",
+        "way_forward": "Urban local bodies need stronger finances, professional staff, integrated metropolitan planning, climate-risk assessments, accountable institutions and greater public participation.",
+        "quick_facts": [
+          "Urban local bodies are institutions of local self-government.",
+          "Climate resilience requires both infrastructure and institutional capacity.",
+          "Land-use planning influences flood, heat and environmental risks.",
+          "Municipal finance determines the ability of cities to provide services."
+        ],
+        "what_upsc_asks": "UPSC may examine urban local bodies, decentralisation, municipal finance, disaster resilience, sustainable cities and institutional coordination.",
+        "key_takeaway": "Climate-resilient cities require empowered urban local bodies and integrated planning. Infrastructure investment alone cannot compensate for weak institutions and fragmented governance."
+      },
+      "recall": {
+        "questions": [
+          "What does urban climate governance include?",
+          "Why do Indian cities struggle to build climate resilience?"
+        ],
+        "anchors": [
+          "Planning",
+          "Municipal Finance",
+          "Capacity",
+          "Coordination",
+          "Participation"
+        ]
+      },
+      "telegram": {
+        "card_title": "Urban Climate Governance",
+        "card_points": [
+          "Climate risks are increasing pressure on Indian cities.",
+          "Urban resilience requires strong local institutions.",
+          "Fragmented authority weakens planning and implementation.",
+          "Municipal finance and technical capacity need improvement."
+        ],
+        "recall_prompt": "Can climate-resilient infrastructure succeed without empowered urban local bodies?"
+      },
+      "youtube": {
+        "hook": "Why do Indian cities repeatedly struggle with floods, heat and infrastructure failure?",
+        "script": "Urban climate risks are not caused only by extreme weather. They are also intensified by weak land-use planning, fragmented authority, inadequate drainage, limited municipal finance and poor institutional coordination. Building resilient cities therefore requires empowered urban local bodies, professional planning, climate-risk assessments and accountable metropolitan governance.",
+        "closing_question": "Should urban climate resilience be treated primarily as an infrastructure issue or a governance issue?"
+      },
+      "website": {
+        "short_heading": "Why Urban Resilience Needs Better Governance",
+        "summary": "Climate-resilient cities require stronger municipal institutions, integrated planning and reliable local finance."
+      }
+    }
+  ],
+  "publication": {
+    "website": {
+      "daily_heading": "Semiconductor Security and Climate-Resilient Cities",
+      "daily_summary": "Today's issues examine India's semiconductor ambitions and the governance reforms required to create climate-resilient urban systems."
+    },
+    "telegram": {
+      "daily_intro": "Today's UPSC Issues cover semiconductor self-reliance and urban climate governance.",
+      "daily_closing": "Revise the recall questions and connect both issues with governance, resilience and long-term national capacity."
+    },
+    "youtube": {
+      "daily_title": "India's Chip Strategy and Urban Climate Governance",
+      "daily_description": "Understand India's semiconductor ecosystem and why stronger urban governance is essential for climate resilience."
+    }
+  }
+}

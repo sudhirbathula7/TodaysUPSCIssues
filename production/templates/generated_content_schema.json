@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "todays-upsc-issues-generated-content-v3.0",
+  "title": "Today's UPSC Issues Canonical Generated Content",
+  "description": "Canonical AI-generated production input for Today's UPSC Issues Version 3.0.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "production",
+    "source_editorials",
+    "issues",
+    "publication"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "3.0"
+    },
+    "production": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_date",
+        "edition_code",
+        "publication_name",
+        "issue_count"
+      ],
+      "properties": {
+        "production_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "edition_code": {
+          "type": "string",
+          "pattern": "^TUI-[0-9]{6}$"
+        },
+        "publication_name": {
+          "type": "string",
+          "const": "Today's UPSC Issues"
+        },
+        "issue_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "generated_by": {
+          "type": "string"
+        }
+      }
+    },
+    "source_editorials": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/sourceEditorial"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/issue"
+      }
+    },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "website",
+        "telegram",
+        "youtube"
+      ],
+      "properties": {
+        "website": {
+          "$ref": "#/$defs/websitePublication"
+        },
+        "telegram": {
+          "$ref": "#/$defs/telegramPublication"
+        },
+        "youtube": {
+          "$ref": "#/$defs/youtubePublication"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringList": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "sourceEditorial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "newspaper",
+        "editorial_title"
+      ],
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "newspaper": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "editorial_title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "publication_date": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "author": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issue_number",
+        "issue_id",
+        "title",
+        "slug",
+        "gs_paper",
+        "syllabus_tags",
+        "rating",
+        "source_ids",
+        "content",
+        "recall",
+        "telegram",
+        "youtube",
+        "website"
+      ],
+      "properties": {
+        "issue_number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "issue_id": {
+          "type": "string",
+          "pattern": "^TUI-[0-9]{6}-[0-9]{2}-[A-Z0-9-]+$"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "gs_paper": {
+          "type": "string",
+          "enum": [
+            "GS I",
+            "GS II",
+            "GS III",
+            "GS IV",
+            "Prelims",
+            "Essay",
+            "GS II & GS III",
+            "GS I & GS II",
+            "GS III & Essay",
+            "Multi-GS"
+          ]
+        },
+        "syllabus_tags": {
+          "$ref": "#/$defs/stringList"
+        },
+        "rating": {
+          "type": "number",
+          "minimum": 4.5,
+          "maximum": 5
+        },
+        "source_ids": {
+          "$ref": "#/$defs/stringList"
+        },
+        "content": {
+          "$ref": "#/$defs/issueContent"
+        },
+        "recall": {
+          "$ref": "#/$defs/recallContent"
+        },
+        "telegram": {
+          "$ref": "#/$defs/telegramIssue"
+        },
+        "youtube": {
+          "$ref": "#/$defs/youtubeIssue"
+        },
+        "website": {
+          "$ref": "#/$defs/websiteIssue"
+        }
+      }
+    },
+    "issueContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_context",
+        "why_it_matters",
+        "core_concept",
+        "challenges",
+        "way_forward",
+        "quick_facts",
+        "what_upsc_asks",
+        "key_takeaway"
+      ],
+      "properties": {
+        "current_context": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "why_it_matters": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "core_concept": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "challenges": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "way_forward": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "quick_facts": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "what_upsc_asks": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "key_takeaway": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "recallContent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "questions",
+        "anchors"
+      ],
+      "properties": {
+        "questions": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "anchors": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "telegramIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "card_title",
+        "card_points",
+        "recall_prompt"
+      ],
+      "properties": {
+        "card_title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "card_points": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "recall_prompt": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "youtubeIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hook",
+        "script",
+        "closing_question"
+      ],
+      "properties": {
+        "hook": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "script": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "closing_question": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "websiteIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "short_heading",
+        "summary"
+      ],
+      "properties": {
+        "short_heading": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "websitePublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "daily_heading",
+        "daily_summary"
+      ],
+      "properties": {
+        "daily_heading": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "daily_summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "telegramPublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "daily_intro",
+        "daily_closing"
+      ],
+      "properties": {
+        "daily_intro": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "daily_closing": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "youtubePublication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "daily_title",
+        "daily_description"
+      ],
+      "properties": {
+        "daily_title": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "daily_description": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    }
+  }
+}

@@ -1,11 +1,11 @@
 ========================================================================
 TODAY'S UPSC ISSUES — PRODUCTION VALIDATION REPORT
 ========================================================================
-Source file     : D:\Personal Projects\TodaysUPSCIssues\production\sessions\2026-07-21\canonical\generated_content.json
-Validated at    : 2026-07-21T19:15:13+05:30
+Source file     : D:\Personal Projects\TodaysUPSCIssues\production\sessions\2026-07-21\canonical\selected_generated_content.json
+Validated at    : 2026-07-21T23:45:02+05:30
 Production date : 2026-07-21
 Edition code    : TUI-260721
-Issue count     : 3
+Issue count     : 4
 Result          : PASSED
 Errors          : 0
 Warnings        : 0

@@ -1,239 +1,309 @@
 {
-  "schema_version": "3.0",
-  "production": {
-    "production_date": "2026-07-21",
-    "edition_code": "TUI-260721",
-    "publication_name": "Today's UPSC Issues",
-    "issue_count": 3,
-    "generated_by": "ChatGPT"
-  },
-  "source_editorials": [
-    {
-      "source_id": "SRC-01",
-      "newspaper": "Editorial Source",
-      "editorial_title": "Freedom of Speech, Dissent and Misuse of Criminal Law",
-      "publication_date": "2026-07-21",
-      "author": null
-    },
-    {
-      "source_id": "SRC-03",
-      "newspaper": "Editorial Source",
-      "editorial_title": "AI-Manipulated Wildlife Images and Scientific Evidence",
-      "publication_date": "2026-07-21",
-      "author": null
-    },
-    {
-      "source_id": "SRC-05",
-      "newspaper": "Editorial Source",
-      "editorial_title": "Examination Integrity, Youth Unemployment and Democratic Protest",
-      "publication_date": "2026-07-21",
-      "author": null
-    }
-  ],
-  "issues": [
-    {
-      "issue_number": 1,
-      "issue_id": "TUI-260721-01-FREEDOM-OF-SPEECH-AND-DISSENT",
-      "title": "Freedom of Speech and Democratic Dissent",
-      "slug": "freedom-of-speech-and-democratic-dissent",
-      "gs_paper": "GS II",
-      "syllabus_tags": [
-        "Fundamental Rights",
-        "Freedom of Speech",
-        "Rule of Law"
-      ],
-      "rating": 4.9,
-      "source_ids": [
-        "SRC-01",
-        "SRC-05"
-      ],
-      "content": {
-        "current_context": "Repeated police action against critics and peaceful protesters has renewed concerns about the use of criminal law to restrict dissent and protect political reputations.",
-        "why_it_matters": "The issue connects fundamental rights, accountable government, police neutrality, democratic participation and the constitutional limits placed on restrictions affecting speech and peaceful assembly.",
-        "core_concept": "Democratic dissent allows citizens to criticise authority, demand accountability and participate between elections, while lawful restrictions must remain reasonable, proportionate and constitutionally justified.",
-        "challenges": "Vague offences, politicised policing, criminal defamation, cyber-law misuse, suo motu action and delayed judicial relief can create a chilling effect on legitimate public criticism.",
-        "way_forward": "Authorities should prefer civil remedies where appropriate, ensure police neutrality, apply proportionality, protect peaceful assembly and strengthen judicial scrutiny of speech-related arrests.",
-        "quick_facts": [
-          "Article 19(1)(a) guarantees freedom of speech and expression.",
-          "Article 19(1)(b) protects peaceful assembly without arms.",
-          "Speech restrictions must fall within Article 19(2).",
-          "Criminal process should not become punishment before conviction."
-        ],
-        "what_upsc_asks": "UPSC may examine reasonable restrictions, misuse of criminal law, police accountability, the chilling effect and the democratic value of peaceful dissent.",
-        "key_takeaway": "A democracy is strengthened when criticism is answered through debate and accountability, not through routine criminalisation of dissent."
-      },
-      "recall": {
-        "questions": [
-          "How can misuse of criminal law create a chilling effect on democratic dissent?",
-          "What constitutional principles should govern restrictions on speech and peaceful protest?"
-        ],
-        "anchors": [
-          "Article 19",
-          "Reasonable restrictions",
-          "Police neutrality",
-          "Proportionality",
-          "Chilling effect"
-        ]
-      },
-      "telegram": {
-        "card_title": "Freedom of Speech and Democratic Dissent",
-        "card_points": [
-          "Criticism of public officials is part of democratic accountability.",
-          "Restrictions on speech must satisfy constitutional standards.",
-          "Politicised policing can create a chilling effect.",
-          "Peaceful protest connects citizens with representative institutions."
-        ],
-        "recall_prompt": "When does regulation of harmful speech become unconstitutional suppression of dissent?"
-      },
-      "youtube": {
-        "hook": "Can a democracy remain healthy when criticism of those in power routinely leads to police action?",
-        "script": "Freedom of speech is not merely an individual liberty. It enables citizens to question authority, expose wrongdoing and participate in governance between elections. When criminal law, defamation provisions or cyber-policing are used casually against critics, the legal process itself can become a form of punishment. Democratic governments must distinguish genuine threats and unlawful content from legitimate criticism. Police neutrality, proportional restrictions and timely judicial review are therefore essential to protect both public order and constitutional freedom.",
-        "closing_question": "How should India balance protection from harmful content with the constitutional supremacy of free expression?"
-      },
-      "website": {
-        "short_heading": "Why Democracies Must Protect Dissent",
-        "summary": "The use of police and criminal law against critics raises constitutional concerns involving free speech, peaceful protest, proportionality and accountable government."
-      }
-    },
-    {
-      "issue_number": 2,
-      "issue_id": "TUI-260721-02-EXAM-INTEGRITY-AND-YOUTH-UNEMPLOYMENT",
-      "title": "Examination Integrity and Youth Unemployment",
-      "slug": "examination-integrity-and-youth-unemployment",
-      "gs_paper": "GS II & GS III",
-      "syllabus_tags": [
-        "Education Governance",
-        "Employment",
-        "Youth Development"
-      ],
-      "rating": 4.8,
-      "source_ids": [
-        "SRC-05"
-      ],
-      "content": {
-        "current_context": "Examination leaks, cancellations, delayed recruitment and irregularities have intensified youth anxiety by weakening confidence in education, competitive testing and access to employment.",
-        "why_it_matters": "Reliable examinations influence equality of opportunity, institutional legitimacy, human-capital development, social mobility and the ability of young citizens to enter education and public employment.",
-        "core_concept": "Examination integrity requires secure question-setting, transparent administration, timely results, accountable institutions, effective grievance redress and fair action against organised malpractice.",
-        "challenges": "Fragmented responsibility, weak cybersecurity, organised cheating networks, delayed investigations, repeated litigation, recruitment backlogs and insufficient communication deepen uncertainty among aspirants.",
-        "way_forward": "Governments should strengthen examination security, establish clear accountability, complete recruitment on time, improve grievance redress and connect education reform with employment generation.",
-        "quick_facts": [
-          "Fair examinations are essential for equality of opportunity.",
-          "Paper leaks can impose financial and psychological costs on candidates.",
-          "Recruitment delays increase uncertainty and age-related disadvantages.",
-          "Education quality and job creation require coordinated policy action."
-        ],
-        "what_upsc_asks": "UPSC may link examination reform with good governance, institutional accountability, demographic dividend, employability, public recruitment and equality of opportunity.",
-        "key_takeaway": "India cannot convert its demographic advantage into development without trustworthy examinations, timely recruitment and sufficient productive employment."
-      },
-      "recall": {
-        "questions": [
-          "Why is examination integrity a governance issue?",
-          "How do exam failures worsen youth unemployment?"
-        ],
-        "anchors": [
-          "Paper leaks",
-          "Recruitment delays",
-          "Equality of opportunity",
-          "Demographic dividend",
-          "Accountability"
-        ]
-      },
-      "telegram": {
-        "card_title": "Examination Integrity and Youth Unemployment",
-        "card_points": [
-          "Exam irregularities weaken institutional trust.",
-          "Candidates bear financial and psychological costs.",
-          "Recruitment delays worsen employment uncertainty.",
-          "Education reform must connect with job creation."
-        ],
-        "recall_prompt": "Why should examination integrity be treated as part of India's demographic-dividend strategy?"
-      },
-      "youtube": {
-        "hook": "What happens when years of preparation can be overturned by a paper leak or a cancelled examination?",
-        "script": "Competitive examinations are gateways to education, employment and social mobility. When leaks, cancellations or unexplained delays become frequent, candidates lose money, time and trust in public institutions. The problem is therefore larger than examination management. It affects equality of opportunity, youth confidence and India's demographic dividend. Reform requires secure technology, accountable examination bodies, quick investigations, timely recruitment and effective grievance redress. At the same time, employment policy must create enough productive opportunities for the growing number of educated young people.",
-        "closing_question": "Can India benefit from its young population without simultaneously reforming examinations and expanding employment?"
-      },
-      "website": {
-        "short_heading": "Restoring Trust in Exams and Employment",
-        "summary": "Examination irregularities and recruitment delays threaten equality of opportunity, institutional credibility and India's ability to use its demographic dividend."
-      }
-    },
-    {
-      "issue_number": 3,
-      "issue_id": "TUI-260721-03-AI-MANIPULATION-OF-SCIENTIFIC-EVIDENCE",
-      "title": "AI Manipulation of Scientific Evidence",
-      "slug": "ai-manipulation-of-scientific-evidence",
-      "gs_paper": "GS III",
-      "syllabus_tags": [
-        "Artificial Intelligence",
-        "Scientific Research",
-        "Biodiversity Monitoring"
-      ],
-      "rating": 4.6,
-      "source_ids": [
-        "SRC-03"
-      ],
-      "content": {
-        "current_context": "Subtly altered wildlife photographs generated through AI tools are entering public observation platforms and risk being mistaken for authentic ecological evidence.",
-        "why_it_matters": "Wildlife records support biodiversity research, climate studies, invasive-species detection, disease surveillance and conservation decisions, making data authenticity scientifically and administratively important.",
-        "core_concept": "Citizen-science platforms combine public observations with expert verification, but AI-generated alterations can introduce false records that appear plausible and contaminate research datasets.",
-        "challenges": "Subtle manipulation is difficult to detect, metadata may be incomplete, platforms depend on public uploads and researchers may spend resources investigating fabricated ecological anomalies.",
-        "way_forward": "Platforms should require disclosure of AI editing, preserve original files and metadata, strengthen expert verification, use forensic detection and promote ethical wildlife-photography standards.",
-        "quick_facts": [
-          "Citizen science enables public participation in scientific data collection.",
-          "Species-location records help monitor ecological and climatic change.",
-          "Generative AI can add realistic but nonexistent visual details.",
-          "A single false observation can misdirect scientific investigation."
-        ],
-        "what_upsc_asks": "UPSC may examine AI ethics, research integrity, citizen science, misinformation, biodiversity monitoring and safeguards for technology-assisted scientific evidence.",
-        "key_takeaway": "AI-enhanced images become a scientific risk when aesthetic modification is not disclosed and fabricated details enter evidence-based research."
-      },
-      "recall": {
-        "questions": [
-          "How can AI-manipulated images contaminate citizen-science datasets?",
-          "What safeguards can protect the authenticity of digital scientific evidence?"
-        ],
-        "anchors": [
-          "Citizen science",
-          "AI hallucination",
-          "Metadata",
-          "Expert verification",
-          "Research integrity"
-        ]
-      },
-      "telegram": {
-        "card_title": "AI Manipulation of Scientific Evidence",
-        "card_points": [
-          "Wildlife photographs can become scientific records.",
-          "Subtle AI alterations may appear authentic.",
-          "False sightings can distort ecological research.",
-          "Disclosure, metadata and verification are essential."
-        ],
-        "recall_prompt": "Why can a small AI-generated change in a wildlife image create a large scientific error?"
-      },
-      "youtube": {
-        "hook": "Can one altered feather in a photograph mislead an entire scientific investigation?",
-        "script": "Wildlife observation platforms are increasingly used to map species, track migration and detect ecological change. But generative AI can add details that never existed while leaving the image apparently realistic. A fabricated species sighting may then be interpreted as evidence of climate change, habitat disruption or biological invasion. Protecting research integrity requires original-image preservation, metadata checks, disclosure of AI editing, expert verification and digital-forensic tools. In science, even a visually minor fabrication can produce a major false conclusion.",
-        "closing_question": "Should AI-edited photographs be excluded from scientific observation platforms unless every alteration is disclosed?"
-      },
-      "website": {
-        "short_heading": "When AI-Altered Images Become False Evidence",
-        "summary": "Undisclosed AI manipulation can contaminate citizen-science platforms and mislead biodiversity, climate and conservation research."
-      }
-    }
-  ],
-  "publication": {
-    "website": {
-      "daily_heading": "Dissent, Examination Integrity and AI-Generated Scientific Misinformation",
-      "daily_summary": "Today's issues examine constitutional protection of dissent, the governance crisis surrounding examinations and employment, and the threat AI manipulation poses to scientific evidence."
-    },
-    "telegram": {
-      "daily_intro": "Today's UPSC Issues cover democratic dissent, examination integrity and the impact of AI-altered images on scientific research.",
-      "daily_closing": "Revise the constitutional, governance and technology dimensions and connect each issue with accountability and institutional trust."
-    },
-    "youtube": {
-      "daily_title": "Free Speech, Exam Integrity and AI Risks to Science",
-      "daily_description": "Understand how criminalisation of dissent, examination failures and AI-manipulated evidence affect democracy, youth opportunity and scientific research."
-    }
-  }
+"schema_version": "3.0",
+"production": {
+"production_date": "2026-07-21",
+"edition_code": "TUI-260721",
+"publication_name": "Today's UPSC Issues",
+"issue_count": 4,
+"generated_by": "ChatGPT"
+},
+"source_editorials": [
+{
+"source_id": "SRC-01",
+"newspaper": "Editorial Source",
+"editorial_title": "Freedom of Speech and Democratic Dissent",
+"publication_date": "2026-07-21",
+"author": null
+},
+{
+"source_id": "SRC-02",
+"newspaper": "Editorial Source",
+"editorial_title": "Education Reform and Youth Protests",
+"publication_date": "2026-07-21",
+"author": null
+},
+{
+"source_id": "SRC-03",
+"newspaper": "Editorial Source",
+"editorial_title": "AI Manipulation and Scientific Integrity",
+"publication_date": "2026-07-21",
+"author": null
+},
+{
+"source_id": "SRC-04",
+"newspaper": "Editorial Source",
+"editorial_title": "Spain's Football Model and Institutional Excellence",
+"publication_date": "2026-07-21",
+"author": null
+}
+],
+"issues": [
+{
+"issue_number": 1,
+"issue_id": "TUI-260721-01-FREEDOM-OF-SPEECH-AND-DEMOCRATIC-DISSENT",
+"title": "Freedom of Speech and Democratic Dissent",
+"slug": "freedom-of-speech-and-democratic-dissent",
+"gs_paper": "GS II",
+"syllabus_tags": [
+"Fundamental Rights",
+"Governance",
+"Democracy"
+],
+"rating": 5.0,
+"source_ids": [
+"SRC-01",
+"SRC-02"
+],
+"content": {
+"current_context": "Recent police action against political critics and youth protests have revived debate on balancing public order with constitutional protection of peaceful dissent.",
+"why_it_matters": "Freedom of speech, peaceful protest and accountable governance are recurring UPSC themes linked to constitutional democracy and civil liberties.",
+"core_concept": "Democracy depends on protecting criticism, ensuring rule of law and permitting peaceful dissent while maintaining reasonable constitutional restrictions.",
+"challenges": "Misuse of criminal provisions, shrinking civic space, politicisation of policing, misinformation concerns and weak institutional accountability undermine democratic freedoms.",
+"way_forward": "Strengthen constitutional safeguards, encourage civil dialogue, ensure proportionate policing, promote judicial oversight and uphold citizens' right to peaceful expression.",
+"quick_facts": [
+"Article 19(1)(a) guarantees freedom of speech and expression.",
+"Article 19(1)(b) guarantees peaceful assembly.",
+"Reasonable restrictions are provided under Article 19(2).",
+"Rule of law is a basic feature of the Constitution."
+],
+"what_upsc_asks": "How should democratic governments balance public order with constitutional freedoms and peaceful dissent?",
+"key_takeaway": "Democracy becomes stronger when governments tolerate criticism and protect constitutional freedoms."
+},
+"recall": {
+"questions": [
+"Which Article protects freedom of speech?",
+"Why is peaceful dissent essential in democracy?"
+],
+"anchors": [
+"Article 19",
+"Rule of Law",
+"Reasonable Restrictions",
+"Peaceful Protest",
+"Democratic Accountability"
+]
+},
+"telegram": {
+"card_title": "Freedom of Speech and Democratic Dissent",
+"card_points": [
+"Article 19 protections",
+"Rule of law",
+"Peaceful protest",
+"Reasonable restrictions"
+],
+"recall_prompt": "Can you recall constitutional safeguards for democratic dissent?"
+},
+"youtube": {
+"hook": "Can a democracy remain strong without protecting criticism?",
+"script": "Freedom of speech is a cornerstone of India's constitutional democracy. Recent controversies over arrests for criticism and protests over public issues remind us that democratic governance requires tolerance of dissent. The Constitution guarantees freedom of expression and peaceful assembly while permitting only reasonable restrictions. Effective governance depends not only on maintaining public order but also on listening to citizens. UPSC frequently links democracy with accountability, civil liberties and constitutional morality.",
+"closing_question": "How can governments balance liberty with public order?"
+},
+"website": {
+"short_heading": "Freedom of Speech in Indian Democracy",
+"summary": "Understanding constitutional protections for speech, peaceful protest and democratic accountability in contemporary governance."
+}
+},
+{
+"issue_number": 2,
+"issue_id": "TUI-260721-02-EDUCATION-REFORM-AND-EXAMINATION-INTEGRITY",
+"title": "Education Reform, Examination Integrity and Youth Employment",
+"slug": "education-reform-and-examination-integrity",
+"gs_paper": "GS II",
+"syllabus_tags": [
+"Education",
+"Governance",
+"Social Justice"
+],
+"rating": 4.9,
+"source_ids": [
+"SRC-02"
+],
+"content": {
+"current_context": "Concerns over examination irregularities and delayed recruitment have intensified demands for reforms in education governance and employment generation.",
+"why_it_matters": "Quality education and transparent examinations directly influence demographic dividend, governance credibility and socio-economic development.",
+"core_concept": "A robust education system requires fair examinations, timely recruitment, skill development and institutional accountability.",
+"challenges": "Exam leaks, administrative delays, unemployment, weak accountability and declining public trust affect educational outcomes.",
+"way_forward": "Strengthen examination security, digitise recruitment, improve institutional accountability, expand skill development and enhance employment opportunities.",
+"quick_facts": [
+"Education is placed in the Concurrent List.",
+"Article 21A guarantees free and compulsory education.",
+"National Education Policy 2020 emphasises holistic reforms.",
+"Demographic dividend depends on skilled youth."
+],
+"what_upsc_asks": "Discuss reforms needed to improve examination integrity and youth employability in India.",
+"key_takeaway": "Education reforms succeed only when transparency, quality and employment opportunities improve together."
+},
+"recall": {
+"questions": [
+"Which Article guarantees education?",
+"Why is examination integrity important?"
+],
+"anchors": [
+"Article 21A",
+"NEP 2020",
+"Exam Reforms",
+"Employment",
+"Skill Development"
+]
+},
+"telegram": {
+"card_title": "Education Reform and Examination Integrity",
+"card_points": [
+"Article 21A",
+"Transparent exams",
+"Skill development",
+"Employment linkage"
+],
+"recall_prompt": "Can you list key reforms needed for examination integrity?"
+},
+"youtube": {
+"hook": "Why do exam leaks become a governance issue?",
+"script": "Education is not only about schools; it is also about fairness, opportunity and trust. Examination irregularities affect millions of students and weaken confidence in public institutions. Transparent recruitment, stronger examination systems and quality skill development are essential to realise India's demographic dividend. UPSC often links education reforms with governance, social justice and inclusive development.",
+"closing_question": "What reforms can restore public trust in examinations?"
+},
+"website": {
+"short_heading": "Education Governance and Examination Reforms",
+"summary": "Exam integrity, education quality and employment are central pillars of India's human capital development."
+}
+},
+{
+"issue_number": 3,
+"issue_id": "TUI-260721-03-AI-AND-SCIENTIFIC-INTEGRITY",
+"title": "AI-Generated Misinformation in Scientific Research",
+"slug": "ai-generated-misinformation-in-scientific-research",
+"gs_paper": "GS III",
+"syllabus_tags": [
+"Artificial Intelligence",
+"Science and Technology",
+"Environment"
+],
+"rating": 4.8,
+"source_ids": [
+"SRC-03"
+],
+"content": {
+"current_context": "AI-edited wildlife images are increasingly creating false scientific records, raising concerns about research reliability and ecological monitoring.",
+"why_it_matters": "Reliable scientific evidence underpins biodiversity conservation, climate research and evidence-based public policy.",
+"core_concept": "Generative AI can unintentionally fabricate details, requiring strong verification before scientific or policy use.",
+"challenges": "Image manipulation, misinformation, weak verification, declining public trust and inaccurate ecological datasets.",
+"way_forward": "Develop AI ethics standards, strengthen scientific validation, improve digital literacy and adopt authenticated data collection practices.",
+"quick_facts": [
+"Generative AI can hallucinate information.",
+"Citizen science contributes biodiversity data.",
+"Ecological monitoring supports conservation policies.",
+"AI ethics emphasises transparency and accountability."
+],
+"what_upsc_asks": "Discuss opportunities and risks of AI in scientific research and environmental governance.",
+"key_takeaway": "Scientific credibility depends on verified evidence despite rapid advances in AI technologies."
+},
+"recall": {
+"questions": [
+"What is AI hallucination?",
+"Why is verified scientific data essential?"
+],
+"anchors": [
+"AI Ethics",
+"Hallucination",
+"Citizen Science",
+"Research Integrity",
+"Biodiversity"
+]
+},
+"telegram": {
+"card_title": "AI and Scientific Integrity",
+"card_points": [
+"AI hallucinations",
+"Research ethics",
+"Data verification",
+"Biodiversity monitoring"
+],
+"recall_prompt": "Can you explain AI hallucination with one example?"
+},
+"youtube": {
+"hook": "Can one edited image mislead scientific research?",
+"script": "Artificial Intelligence can improve research but can also create subtle misinformation through manipulated images and fabricated details. Scientists increasingly depend on digital evidence for biodiversity monitoring and climate studies. Therefore, AI-generated content must be carefully verified before influencing scientific conclusions or public policy. UPSC may connect this topic with AI ethics, governance and environmental conservation.",
+"closing_question": "Should AI-generated scientific evidence require mandatory verification?"
+},
+"website": {
+"short_heading": "AI, Research Ethics and Scientific Evidence",
+"summary": "Understanding how generative AI affects scientific reliability, biodiversity research and evidence-based policymaking."
+}
+},
+{
+"issue_number": 4,
+"issue_id": "TUI-260721-04-SPORTS-ECOSYSTEMS-AND-INSTITUTIONAL-CAPACITY",
+"title": "Sports Ecosystems and Institutional Capacity Building",
+"slug": "sports-ecosystems-and-institutional-capacity-building",
+"gs_paper": "GS II",
+"syllabus_tags": [
+"Governance",
+"Human Resource Development",
+"Institution Building"
+],
+"rating": 4.5,
+"source_ids": [
+"SRC-04"
+],
+"content": {
+"current_context": "Spain's sustained football success highlights the importance of long-term investment in coaching, grassroots development and institutional continuity.",
+"why_it_matters": "Institution building, leadership development and human capital creation are relevant beyond sports and apply to public governance.",
+"core_concept": "Sustained excellence emerges from strong institutions, coaching systems, talent identification and continuous learning.",
+"challenges": "Short-term planning, inadequate grassroots infrastructure, inconsistent coaching quality and weak talent pathways.",
+"way_forward": "Promote grassroots development, invest in coaching, strengthen institutions and ensure long-term policy continuity.",
+"quick_facts": [
+"Grassroots development creates sustainable sporting success.",
+"Coaching quality shapes long-term performance.",
+"Institutional continuity improves outcomes.",
+"Human capital is a key development resource."
+],
+"what_upsc_asks": "How can institution building improve India's sports ecosystem and human capital development?",
+"key_takeaway": "Strong institutions consistently outperform dependence on individual brilliance."
+},
+"recall": {
+"questions": [
+"Why are grassroots systems important?",
+"How does institution building improve outcomes?"
+],
+"anchors": [
+"Grassroots",
+"Coaching",
+"Institution Building",
+"Human Capital",
+"Leadership"
+]
+},
+"telegram": {
+"card_title": "Sports Ecosystems and Institution Building",
+"card_points": [
+"Grassroots development",
+"Coaching systems",
+"Institutional continuity",
+"Human capital"
+],
+"recall_prompt": "Can you identify the pillars of a successful sports ecosystem?"
+},
+"youtube": {
+"hook": "Why do some countries dominate world sports for decades?",
+"script": "Spain's football success is not built on one superstar but on decades of investment in coaching, youth academies and institutional excellence. The same principle applies to governance and public administration: strong institutions consistently produce better outcomes than short-term solutions. UPSC often values such governance lessons across sectors.",
+"closing_question": "Can India's governance adopt similar institution-building principles?"
+},
+"website": {
+"short_heading": "Institution Building Through Sports",
+"summary": "Spain's football model illustrates how long-term institution building and human capital create sustained excellence."
+}
+}
+],
+"publication": {
+"website": {
+"daily_heading": "Democracy, Education Reform, AI Ethics and Institution Building",
+"daily_summary": "Today's edition covers constitutional freedoms, education governance, AI-driven scientific integrity and lessons in institution building from global sports."
+},
+"telegram": {
+"daily_intro": "Revise four high-impact UPSC issues from governance, science and institution building.",
+"daily_closing": "Practice the recall questions and strengthen conceptual understanding."
+},
+"youtube": {
+"daily_title": "Today's UPSC Issues | 21 July 2026 | 4 Important Issues Explained",
+"daily_description": "Freedom of speech, education reforms, AI ethics and institution building through sports—concise UPSC revision in one video."
+}
+}
 }

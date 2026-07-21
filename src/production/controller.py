@@ -5,36 +5,33 @@ VERSION 3.0 PRODUCTION CONTROLLER
 Created by Sudhir
 ============================================================
 
-PURPOSE
+SIMPLIFIED WORKFLOW
 
-Coordinates the Version 3.0 production workflow above the
-stable Version 2.1 modules.
-
-WORKFLOW
-
-1. Create/load production session
-2. Generate Issue Selection Prompt
-3. Save selected issue numbers
-4. Generate Final Content Prompt
-5. Import ChatGPT JSON response
-6. Validate canonical data
-7. Convert canonical data to Version 2.1 input
-8. Run the existing Version 2.1 daily runner
+generated_content.json
+        ↓
+Optional issue selection
+        ↓
+Validation
+        ↓
+Version 2.1 Adapter
+        ↓
+Existing Daily Runner
+        ↓
+Repository + Intelligence + Outputs + PDF
 ============================================================
 """
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 from src.production.models import SessionStatus
 from src.production.paths import (
-    CANONICAL_SCHEMA_FILE,
     PROJECT_ROOT,
     ProductionPaths,
 )
@@ -48,14 +45,8 @@ from src.production.v21_adapter import V21Adapter
 
 
 # ==========================================================
-# CONSTANTS
+# VERSION 2.1 ENTRY POINT
 # ==========================================================
-
-MASTER_PROMPT_FILE = (
-    PROJECT_ROOT
-    / "production"
-    / "01_Master_Production_Prompt.md"
-)
 
 V21_DAILY_RUNNER = (
     PROJECT_ROOT
@@ -69,16 +60,18 @@ V21_DAILY_RUNNER = (
 # ==========================================================
 
 class ProductionControllerError(RuntimeError):
-    """Raised when Version 3.0 production cannot continue."""
+    """
+    Raised when Version 3.0 production cannot continue.
+    """
 
 
 # ==========================================================
-# CONTROLLER
+# PRODUCTION CONTROLLER
 # ==========================================================
 
 class ProductionController:
     """
-    Coordinate one daily Version 3.0 production session.
+    Run the simplified Version 3.0 production workflow.
     """
 
     def __init__(
@@ -86,17 +79,21 @@ class ProductionController:
         production_date: str,
     ) -> None:
         self.production_date = production_date
+
         self.paths = ProductionPaths.for_date(
             production_date
         )
+
         self.manager = ProductionSessionManager(
             production_date
         )
+
         self.validator = ProductionValidator(
             expected_production_date=(
                 production_date
             )
         )
+
         self.adapter = V21Adapter(
             expected_production_date=(
                 production_date
@@ -108,593 +105,380 @@ class ProductionController:
     # ------------------------------------------------------
 
     @staticmethod
-    def _heading(title: str) -> None:
+    def _heading(
+        title: str,
+    ) -> None:
         print("=" * 72)
         print("TODAY'S UPSC ISSUES")
         print(title)
         print("=" * 72)
 
     @staticmethod
-    def _success(message: str) -> None:
+    def _success(
+        message: str,
+    ) -> None:
         print(f"✓ {message}")
 
     # ------------------------------------------------------
-    # COMMON READERS
+    # SESSION
     # ------------------------------------------------------
 
-    @staticmethod
-    def _read_required_text(
-        path: Path,
-        description: str,
-    ) -> str:
-        if not path.exists():
-            raise ProductionControllerError(
-                f"{description} was not found:\n{path}"
-            )
-
-        text = path.read_text(
-            encoding="utf-8"
-        ).strip()
-
-        if not text:
-            raise ProductionControllerError(
-                f"{description} is empty:\n{path}"
-            )
-
-        return text
-
-    def _read_master_prompt(self) -> str:
-        return self._read_required_text(
-            MASTER_PROMPT_FILE,
-            "Master production prompt",
-        )
-
-    def _read_schema_text(self) -> str:
-        return self._read_required_text(
-            CANONICAL_SCHEMA_FILE,
-            "Canonical JSON schema",
-        )
-
-        # ------------------------------------------------------
-    # SESSION PREPARATION
-    # ------------------------------------------------------
-
-    def prepare_session(
-        self,
-        *,
-        overwrite: bool = False,
-    ) -> Path:
+    def ensure_session(self) -> None:
         """
-        Create or load the daily session and generate Prompt 1.
+        Ensure the production session and directories exist.
         """
 
-        self._heading(
-            "VERSION 3.0 — PREPARE PRODUCTION SESSION"
-        )
+        self.paths.create_directories()
 
-        if self.manager.exists and not overwrite:
-            session = self.manager.load_session()
-
-            self._success(
-                "Existing production session loaded"
-            )
-
-            if not self.paths.editorials_file.exists():
-                source_path = self.manager.copy_editorials(
-                    overwrite=False
-                )
-
-                session.metadata["editorials_copied"] = True
-                session.metadata["editorials_source"] = str(
-                    source_path
-                )
-                session.metadata["editorials_file"] = str(
-                    self.paths.editorials_file
-                )
-
-                self.manager.save_session(session)
-
-                self._success(
-                    "Editorial input copied into session"
-                )
-
-        else:
-            session = self.manager.create_session(
-                overwrite=overwrite,
-                copy_editorials=True,
+        if not self.manager.exists:
+            self.manager.create_session(
+                copy_editorials=False,
             )
 
             self._success(
-                "New production session created"
+                "Production session created"
             )
 
-        prompt_path = self.build_selection_prompt(
-            overwrite=overwrite
-        )
-
-        session = self.manager.mark_stage_completed(
-            "selection_prompt",
-            status=(
-                SessionStatus.SELECTION_PROMPT_READY
-            ),
-            metadata={
-                "issue_selection_prompt": str(
-                    prompt_path
-                )
-            },
-        )
-
-        self._success(
-            "Issue Selection Prompt generated"
-        )
-
-        print("-" * 72)
-        print(f"Date    : {session.production_date}")
-        print(f"Edition : {session.edition_code}")
-        print(f"Prompt  : {prompt_path}")
-        print("-" * 72)
-        print("NEXT STEP")
-        print()
-        print("1. Open the prompt file.")
-        print("2. Paste it into ChatGPT.")
-        print("3. Review the shortlisted issues.")
-        print("4. Run:")
-        print()
-        print(
-            f"python production.py "
-            f"{self.production_date} "
-            f"--select 1 2 3"
-        )
-        print("=" * 72)
-
-        return prompt_path
-
     # ------------------------------------------------------
-    # PROMPT 1
+    # LOAD CANONICAL DATA
     # ------------------------------------------------------
 
-    def build_selection_prompt(
+    def _load_canonical_data(
         self,
-        *,
-        overwrite: bool = False,
-    ) -> Path:
+    ) -> dict:
         """
-        Generate the Issue Selection Prompt.
+        Load the original generated_content.json file.
         """
 
-        editorials = self.manager.read_editorials()
-        master_prompt = self._read_master_prompt()
-
-        output_path = (
-            self.paths.issue_selection_prompt_file
+        canonical_file = (
+            self.paths.generated_content_file
         )
 
-        if output_path.exists() and not overwrite:
-            return output_path
+        if not canonical_file.exists():
+            raise ProductionControllerError(
+                "Canonical generated_content.json was not found:\n"
+                f"{canonical_file}"
+            )
 
-        prompt = f"""
-{master_prompt}
+        try:
+            data = json.loads(
+                canonical_file.read_text(
+                    encoding="utf-8"
+                )
+            )
+        except json.JSONDecodeError as exc:
+            raise ProductionControllerError(
+                "generated_content.json contains invalid JSON "
+                f"at line {exc.lineno}, column {exc.colno}: "
+                f"{exc.msg}"
+            ) from exc
 
-============================================================
-VERSION 3.0 — STAGE 1 EXECUTION
-============================================================
+        if not isinstance(data, dict):
+            raise ProductionControllerError(
+                "Canonical content must be a JSON object."
+            )
 
-PRODUCTION DATE
-{self.production_date}
-
-TASK
-Perform only the EDITORIAL CURATOR stage.
-
-Read every editorial below completely.
-
-Identify a maximum of four strong, independent UPSC issues.
-Publish fewer than four when fewer issues deserve publication.
-Reject every issue rated below 4.5 out of 5.
-Merge overlapping issues.
-Do not generate the final issue datasets yet.
-
-OUTPUT
-Display only these columns:
-
-Issue Number
-Issue Title
-GS Paper
-Subject
-Rating
-Source Editorial(s)
-Reason for Selection
-
-Stop after the shortlist and wait for the selected issue numbers.
-
-============================================================
-TODAY'S EDITORIALS
-============================================================
-
-{editorials}
-
-============================================================
-END OF EDITORIAL INPUT
-============================================================
-""".strip() + "\n"
-
-        output_path.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        output_path.write_text(
-            prompt,
-            encoding="utf-8",
-        )
-
-        return output_path
+        return data
 
     # ------------------------------------------------------
     # ISSUE SELECTION
     # ------------------------------------------------------
 
-    def select_issues(
+    def prepare_selected_canonical(
         self,
-        issue_numbers: list[int],
-        *,
-        overwrite: bool = False,
+        issue_numbers: list[int] | None,
     ) -> Path:
         """
-        Save selected issue numbers and generate Prompt 2.
+        Create the canonical file used for the current build.
+
+        When issue_numbers are supplied, only those original
+        issue numbers are retained.
+
+        Selected issues are renumbered sequentially from 1.
+
+        production.issue_count and issue_id values are updated
+        automatically.
+
+        When issue_numbers are omitted, every issue present in
+        generated_content.json is used.
         """
 
-        self._heading(
-            "VERSION 3.0 — SAVE ISSUE SELECTION"
+        self.ensure_session()
+
+        canonical_data = (
+            self._load_canonical_data()
         )
 
-        session = (
-            self.manager.save_selected_issue_numbers(
-                issue_numbers,
-                overwrite=overwrite,
+        all_issues = canonical_data.get(
+            "issues"
+        )
+
+        if (
+            not isinstance(all_issues, list)
+            or not all_issues
+        ):
+            raise ProductionControllerError(
+                "Canonical content contains no issues."
             )
-        )
 
-        self._success(
-            "Selected issue numbers saved"
-        )
+        issue_lookup: dict[int, dict] = {}
 
-        prompt_path = self.build_content_prompt(
-            overwrite=overwrite
-        )
+        for issue in all_issues:
+            if not isinstance(issue, dict):
+                continue
 
-        session = self.manager.mark_stage_completed(
-            "content_prompt",
-            status=(
-                SessionStatus.CONTENT_PROMPT_READY
-            ),
-            metadata={
-                "final_content_prompt": str(
-                    prompt_path
+            issue_number = issue.get(
+                "issue_number"
+            )
+
+            if (
+                isinstance(issue_number, int)
+                and not isinstance(
+                    issue_number,
+                    bool,
                 )
-            },
+            ):
+                issue_lookup[
+                    issue_number
+                ] = issue
+
+        if not issue_lookup:
+            raise ProductionControllerError(
+                "Canonical issues do not contain valid "
+                "issue_number values."
+            )
+
+        if issue_numbers:
+            cleaned_numbers: list[int] = []
+
+            for number in issue_numbers:
+                if (
+                    not isinstance(number, int)
+                    or isinstance(number, bool)
+                    or number < 1
+                ):
+                    raise ProductionControllerError(
+                        "Selected issue numbers must be "
+                        "positive integers."
+                    )
+
+                if number not in cleaned_numbers:
+                    cleaned_numbers.append(
+                        number
+                    )
+
+            unavailable_numbers = [
+                number
+                for number in cleaned_numbers
+                if number not in issue_lookup
+            ]
+
+            if unavailable_numbers:
+                available_text = ", ".join(
+                    str(number)
+                    for number in sorted(
+                        issue_lookup
+                    )
+                )
+
+                unavailable_text = ", ".join(
+                    str(number)
+                    for number in unavailable_numbers
+                )
+
+                raise ProductionControllerError(
+                    "The following selected issue numbers are "
+                    "not present in generated_content.json: "
+                    f"{unavailable_text}\n"
+                    f"Available issue numbers: {available_text}"
+                )
+
+        else:
+            cleaned_numbers = sorted(
+                issue_lookup
+            )
+
+        selected_issues = [
+            copy.deepcopy(
+                issue_lookup[number]
+            )
+            for number in cleaned_numbers
+        ]
+
+        if not selected_issues:
+            raise ProductionControllerError(
+                "No issues were selected for production."
+            )
+
+        production = canonical_data.get(
+            "production"
         )
 
-        selected_text = ", ".join(
-            str(number)
-            for number in session.selected_issue_numbers
+        if not isinstance(production, dict):
+            raise ProductionControllerError(
+                "Canonical production metadata is missing."
+            )
+
+        edition_code = str(
+            production.get(
+                "edition_code",
+                "",
+            )
+        ).strip()
+
+        if not edition_code:
+            raise ProductionControllerError(
+                "Canonical edition_code is missing."
+            )
+
+        for new_number, issue in enumerate(
+            selected_issues,
+            start=1,
+        ):
+            issue["issue_number"] = (
+                new_number
+            )
+
+            old_issue_id = str(
+                issue.get(
+                    "issue_id",
+                    "",
+                )
+            ).strip()
+
+            new_issue_id = re.sub(
+                (
+                    r"^(TUI-[0-9]{6}-)"
+                    r"[0-9]{2}(-)"
+                ),
+                (
+                    rf"\g<1>"
+                    f"{new_number:02d}"
+                    r"\2"
+                ),
+                old_issue_id,
+            )
+
+            if (
+                not new_issue_id
+                or new_issue_id == old_issue_id
+                and not old_issue_id.startswith(
+                    f"{edition_code}-"
+                    f"{new_number:02d}-"
+                )
+            ):
+                title_part = re.sub(
+                    r"[^A-Z0-9]+",
+                    "-",
+                    str(
+                        issue.get(
+                            "title",
+                            "ISSUE",
+                        )
+                    ).upper(),
+                ).strip("-")
+
+                if not title_part:
+                    title_part = "ISSUE"
+
+                new_issue_id = (
+                    f"{edition_code}-"
+                    f"{new_number:02d}-"
+                    f"{title_part}"
+                )
+
+            issue["issue_id"] = (
+                new_issue_id
+            )
+
+        selected_data = copy.deepcopy(
+            canonical_data
         )
 
-        self._success(
-            "Final Content Prompt generated"
+        selected_data["issues"] = (
+            selected_issues
         )
 
-        print("-" * 72)
-        print(f"Selected issues : {selected_text}")
-        print(f"Prompt          : {prompt_path}")
-        print("-" * 72)
-        print("NEXT STEP")
-        print()
-        print("1. Open the Final Content Prompt.")
-        print("2. Paste it into ChatGPT.")
-        print("3. Copy the complete JSON response into:")
-        print()
-        print(f"   {self.paths.final_ai_response_file}")
-        print()
-        print("4. Run:")
-        print()
-        print(
-            f"python production.py "
-            f"{self.production_date} --run"
-        )
-        print("=" * 72)
-
-        return prompt_path
-
-    # ------------------------------------------------------
-    # PROMPT 2
-    # ------------------------------------------------------
-
-    def build_content_prompt(
-        self,
-        *,
-        overwrite: bool = False,
-    ) -> Path:
-        """
-        Generate the Final Content Prompt.
-        """
-
-        editorials = self.manager.read_editorials()
-        selected_numbers = (
-            self.manager.load_selected_issue_numbers()
-        )
-        master_prompt = self._read_master_prompt()
-        schema_text = self._read_schema_text()
-
-        output_path = (
-            self.paths.final_content_prompt_file
+        selected_data[
+            "production"
+        ]["issue_count"] = len(
+            selected_issues
         )
 
-        if output_path.exists() and not overwrite:
-            return output_path
-
-        selected_text = ", ".join(
-            str(number)
-            for number in selected_numbers
+        selected_file = (
+            self.paths.canonical_dir
+            / "selected_generated_content.json"
         )
 
-        prompt = f"""
-{master_prompt}
-
-============================================================
-VERSION 3.0 — STAGE 2 EXECUTION
-============================================================
-
-PRODUCTION DATE
-{self.production_date}
-
-SELECTED ISSUE NUMBERS
-{selected_text}
-
-TASK
-Generate content only for the selected issue numbers.
-
-Use the editorials as the primary source.
-Produce original UPSC educational content.
-Do not copy newspaper wording or sentence structure.
-
-IMPORTANT VERSION 3.0 OUTPUT RULE
-The old plain-text parser format does not apply to this run.
-
-Return exactly one valid JSON object matching the canonical
-schema provided below.
-
-Do not use markdown.
-Do not use JSON code fences.
-Do not include any introduction, explanation, validation
-message, notes or concluding text.
-
-The response must begin with {{ and end with }}.
-
-CONTENT REQUIREMENTS
-- Exactly two recall questions for every issue.
-- Exactly four Quick Facts for every issue.
-- Rating must be numeric and at least 4.5.
-- issue_count must match the number of generated issues.
-- Issue numbers must begin at 1 and remain sequential in the
-  generated JSON.
-- Use production date {self.production_date}.
-- Use edition code {self.paths.production_date.strftime("TUI-%y%m%d")}.
-- Include Telegram, YouTube and website content.
-- Include every mandatory field from the schema.
-- Use only source IDs declared in source_editorials.
-
-============================================================
-CANONICAL JSON SCHEMA
-============================================================
-
-{schema_text}
-
-============================================================
-TODAY'S EDITORIALS
-============================================================
-
-{editorials}
-
-============================================================
-FINAL INSTRUCTION
-============================================================
-
-Return only the complete canonical JSON object.
-""".strip() + "\n"
-
-        output_path.parent.mkdir(
+        selected_file.parent.mkdir(
             parents=True,
             exist_ok=True,
         )
 
-        output_path.write_text(
-            prompt,
-            encoding="utf-8",
-        )
-
-        return output_path
-
-    # ------------------------------------------------------
-    # AI RESPONSE IMPORT
-    # ------------------------------------------------------
-
-    @staticmethod
-    def _extract_json_text(
-        raw_text: str,
-    ) -> str:
-        """
-        Extract one JSON object from a ChatGPT response.
-        """
-
-        text = raw_text.strip()
-
-        if text.startswith("```"):
-            text = re.sub(
-                r"^```(?:json)?\s*",
-                "",
-                text,
-                flags=re.IGNORECASE,
-            )
-
-            text = re.sub(
-                r"\s*```$",
-                "",
-                text,
-            )
-
-            text = text.strip()
-
-        try:
-            decoded = json.loads(text)
-        except json.JSONDecodeError:
-            start = text.find("{")
-            end = text.rfind("}")
-
-            if start == -1 or end == -1 or end <= start:
-                raise ProductionControllerError(
-                    "No complete JSON object was found in "
-                    "final_ai_response.txt."
-                )
-
-            text = text[start:end + 1]
-
-            try:
-                decoded = json.loads(text)
-            except json.JSONDecodeError as exc:
-                raise ProductionControllerError(
-                    "The AI response contains invalid JSON at "
-                    f"line {exc.lineno}, column {exc.colno}: "
-                    f"{exc.msg}"
-                ) from exc
-
-        if not isinstance(decoded, dict):
-            raise ProductionControllerError(
-                "The canonical AI response must be one "
-                "JSON object."
-            )
-
-        return (
+        selected_file.write_text(
             json.dumps(
-                decoded,
+                selected_data,
                 indent=2,
                 ensure_ascii=False,
             )
-            + "\n"
-        )
-
-    def import_ai_response(
-        self,
-        *,
-        overwrite: bool = False,
-    ) -> Path:
-        """
-        Import final_ai_response.txt as generated_content.json.
-        """
-
-        self._heading(
-            "VERSION 3.0 — IMPORT AI RESPONSE"
-        )
-
-        raw_path = (
-            self.paths.final_ai_response_file
-        )
-
-        raw_text = self._read_required_text(
-            raw_path,
-            "Final AI response",
-        )
-
-        canonical_path = (
-            self.paths.generated_content_file
-        )
-
-        if canonical_path.exists() and not overwrite:
-            existing = canonical_path.read_text(
-                encoding="utf-8"
-            )
-
-            extracted = self._extract_json_text(
-                raw_text
-            )
-
-            if existing != extracted:
-                raise ProductionControllerError(
-                    "generated_content.json already exists "
-                    "with different content. Use --overwrite "
-                    "only when intentionally replacing it."
-                )
-
-            self._success(
-                "Existing canonical JSON is unchanged"
-            )
-
-            return canonical_path
-
-        self.paths.raw_response_archive_file.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        self.paths.raw_response_archive_file.write_text(
-            raw_text.rstrip() + "\n",
-            encoding="utf-8",
-        )
-
-        extracted_json = self._extract_json_text(
-            raw_text
-        )
-
-        canonical_path.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        canonical_path.write_text(
-            extracted_json,
+            + "\n",
             encoding="utf-8",
         )
 
         self.manager.mark_stage_completed(
-            "response_imported",
-            status=SessionStatus.RESPONSE_IMPORTED,
+            "issues_selected_for_build",
             metadata={
-                "generated_content_file": str(
-                    canonical_path
-                )
+                "selected_issue_numbers": (
+                    cleaned_numbers
+                ),
+                "selected_issue_count": len(
+                    selected_issues
+                ),
+                "selected_canonical_file": str(
+                    selected_file
+                ),
             },
         )
 
-        self._success(
-            "AI response imported"
-        )
-        self._success(
-            "Canonical generated_content.json created"
+        selected_text = ", ".join(
+            str(number)
+            for number in cleaned_numbers
         )
 
-        print(f"Canonical file: {canonical_path}")
-        print("=" * 72)
+        self._success(
+            f"{len(selected_issues)} issue(s) "
+            f"selected for production: "
+            f"{selected_text}"
+        )
 
-        return canonical_path
+        return selected_file
 
     # ------------------------------------------------------
     # VALIDATION
     # ------------------------------------------------------
 
-    def validate_canonical(self) -> None:
+    def validate_canonical(
+        self,
+        canonical_file: Path | None = None,
+    ) -> None:
         """
-        Validate generated_content.json and save reports.
+        Validate canonical content and save reports.
         """
+
+        self.ensure_session()
 
         self._heading(
             "VERSION 3.0 — VALIDATE CANONICAL CONTENT"
         )
 
-        canonical_path = (
-            self.paths.generated_content_file
+        validation_file = (
+            canonical_file
+            if canonical_file is not None
+            else self.paths.generated_content_file
         )
 
         result = self.validator.validate_file(
-            canonical_path
+            validation_file
         )
 
         self.validator.save_reports(
@@ -709,13 +493,15 @@ Return only the complete canonical JSON object.
             ),
         )
 
-        print(result.to_text())
+        print(
+            result.to_text()
+        )
 
         if not result.is_valid:
             self.manager.mark_failed(
                 "canonical_validation",
                 (
-                    f"Canonical validation failed with "
+                    "Canonical validation failed with "
                     f"{len(result.errors)} error(s)."
                 ),
             )
@@ -729,10 +515,13 @@ Return only the complete canonical JSON object.
             "canonical_validation",
             status=SessionStatus.VALIDATED,
             metadata={
+                "validated_canonical_file": str(
+                    validation_file
+                ),
                 "validation_report": str(
                     self.paths
                     .validation_report_json_file
-                )
+                ),
             },
         )
 
@@ -741,29 +530,69 @@ Return only the complete canonical JSON object.
         )
 
     # ------------------------------------------------------
+    # SOURCE FILES
+    # ------------------------------------------------------
+
+    def source_files(
+        self,
+    ) -> list[str]:
+        """
+        Return usable editorial source files for archiving.
+        """
+
+        editorial_file = (
+            self.paths.editorials_file
+        )
+
+        if not editorial_file.exists():
+            return []
+
+        if not editorial_file.is_file():
+            return []
+
+        try:
+            editorial_text = (
+                editorial_file.read_text(
+                    encoding="utf-8"
+                )
+            )
+        except UnicodeDecodeError:
+            return []
+
+        if not editorial_text.strip():
+            return []
+
+        return [
+            str(editorial_file)
+        ]
+
+    # ------------------------------------------------------
     # VERSION 2.1 ADAPTER
     # ------------------------------------------------------
 
     def create_v21_input(
         self,
         *,
+        canonical_file: Path | None = None,
         overwrite: bool = False,
     ) -> None:
         """
-        Create Daily_Work/input/selected_issues.json.
+        Convert canonical JSON into selected_issues.json.
         """
 
         self._heading(
             "VERSION 3.0 — CREATE VERSION 2.1 INPUT"
         )
 
+        adapter_file = (
+            canonical_file
+            if canonical_file is not None
+            else self.paths.generated_content_file
+        )
+
         result = self.adapter.convert_file(
-            canonical_file=(
-                self.paths.generated_content_file
-            ),
-            source_files=[
-                str(self.paths.editorials_file)
-            ],
+            canonical_file=adapter_file,
+            source_files=self.source_files(),
             overwrite=overwrite,
             create_backup=True,
         )
@@ -793,7 +622,7 @@ Return only the complete canonical JSON object.
         open_pdf: bool = False,
     ) -> None:
         """
-        Run the existing Version 2.1 daily runner.
+        Run the existing stable Version 2.1 daily runner.
         """
 
         self._heading(
@@ -813,10 +642,14 @@ Return only the complete canonical JSON object.
         ]
 
         if overwrite:
-            command.append("--overwrite")
+            command.append(
+                "--overwrite"
+            )
 
         if open_pdf:
-            command.append("--open-pdf")
+            command.append(
+                "--open-pdf"
+            )
 
         print("Command:")
         print(" ".join(command))
@@ -833,7 +666,8 @@ Return only the complete canonical JSON object.
                 "v21_pipeline",
                 (
                     "Version 2.1 daily runner exited "
-                    f"with code {completed.returncode}."
+                    f"with code "
+                    f"{completed.returncode}."
                 ),
             )
 
@@ -843,7 +677,9 @@ Return only the complete canonical JSON object.
 
         self.manager.mark_stage_completed(
             "v21_pipeline",
-            status=SessionStatus.PRODUCTION_COMPLETED,
+            status=(
+                SessionStatus.PRODUCTION_COMPLETED
+            ),
             metadata={
                 "repository_daily_dir": str(
                     self.paths.repository_daily_dir
@@ -859,32 +695,40 @@ Return only the complete canonical JSON object.
         )
 
     # ------------------------------------------------------
-    # COMPLETE RUN
+    # COMPLETE BUILD
     # ------------------------------------------------------
 
-    def run(
+    def build(
         self,
         *,
+        issue_numbers: list[int] | None = None,
         overwrite: bool = False,
         open_pdf: bool = False,
     ) -> None:
         """
-        Import, validate, adapt and run production.
+        Select issues, validate, adapt and run production.
         """
 
         self._heading(
-            "VERSION 3.0 — COMPLETE PRODUCTION RUN"
+            "VERSION 3.0 — COMPLETE PRODUCTION BUILD"
         )
 
         try:
-            self.import_ai_response(
-                overwrite=overwrite
+            selected_canonical_file = (
+                self.prepare_selected_canonical(
+                    issue_numbers
+                )
             )
 
-            self.validate_canonical()
+            self.validate_canonical(
+                selected_canonical_file
+            )
 
             self.create_v21_input(
-                overwrite=overwrite
+                canonical_file=(
+                    selected_canonical_file
+                ),
+                overwrite=overwrite,
             )
 
             self.run_v21_pipeline(
@@ -895,18 +739,34 @@ Return only the complete canonical JSON object.
         except Exception as error:
             print()
             print("=" * 72)
-            print("PRODUCTION FAILED")
+            print(
+                "VERSION 3.0 PRODUCTION FAILED"
+            )
             print("=" * 72)
             print(str(error))
             print("=" * 72)
             raise
 
+        selected_count = len(
+            issue_numbers
+        ) if issue_numbers else "ALL"
+
         print()
         print("=" * 72)
         print("TODAY'S UPSC ISSUES")
-        print("VERSION 3.0 PRODUCTION COMPLETED SUCCESSFULLY")
+        print(
+            "VERSION 3.0 PRODUCTION "
+            "COMPLETED SUCCESSFULLY"
+        )
         print("=" * 72)
-        print(f"Date       : {self.production_date}")
+        print(
+            f"Date       : "
+            f"{self.production_date}"
+        )
+        print(
+            f"Issues     : "
+            f"{selected_count}"
+        )
         print(
             f"Repository : "
             f"{self.paths.repository_daily_dir}"
@@ -921,26 +781,148 @@ Return only the complete canonical JSON object.
     # STATUS
     # ------------------------------------------------------
 
-    def print_status(self) -> None:
+    def print_status(
+        self,
+    ) -> None:
         """
-        Display the current production session status.
+        Display simplified production readiness.
         """
 
-        if not self.manager.exists:
-            self._heading(
-                "VERSION 3.0 — SESSION STATUS"
-            )
-            print(
-                "No production session exists for "
-                f"{self.production_date}."
-            )
-            print()
-            print("Run:")
+        self._heading(
+            "VERSION 3.0 — PRODUCTION STATUS"
+        )
+
+        canonical_exists = (
+            self.paths
+            .generated_content_file
+            .exists()
+        )
+
+        validation_exists = (
+            self.paths
+            .validation_report_json_file
+            .exists()
+        )
+
+        print(
+            f"Date      : "
+            f"{self.production_date}"
+        )
+
+        print(
+            f"Session   : "
+            f"{'YES' if self.manager.exists else 'NO'}"
+        )
+
+        print(
+            f"Editorials: "
+            f"{'YES' if self.paths.editorials_file.exists() else 'NO'}"
+        )
+
+        print(
+            f"Canonical : "
+            f"{'YES' if canonical_exists else 'NO'}"
+        )
+
+        print(
+            f"Validation: "
+            f"{'YES' if validation_exists else 'NO'}"
+        )
+
+        print("-" * 72)
+
+        print(
+            "Canonical file:"
+        )
+
+        print(
+            self.paths.generated_content_file
+        )
+
+        print("-" * 72)
+
+        if canonical_exists:
+            try:
+                canonical_data = (
+                    self._load_canonical_data()
+                )
+
+                issues = canonical_data.get(
+                    "issues",
+                    [],
+                )
+
+                available_numbers = [
+                    issue.get(
+                        "issue_number"
+                    )
+                    for issue in issues
+                    if isinstance(
+                        issue,
+                        dict,
+                    )
+                ]
+
+                available_numbers = [
+                    number
+                    for number in available_numbers
+                    if isinstance(
+                        number,
+                        int,
+                    )
+                    and not isinstance(
+                        number,
+                        bool,
+                    )
+                ]
+
+                if available_numbers:
+                    number_text = " ".join(
+                        str(number)
+                        for number in sorted(
+                            available_numbers
+                        )
+                    )
+
+                    print(
+                        "Available issues:"
+                    )
+
+                    print(
+                        number_text
+                    )
+
+                    print("-" * 72)
+
+            except ProductionControllerError:
+                pass
+
+            print("Build all issues:")
+
             print(
                 f"python production.py "
-                f"{self.production_date} --prepare"
+                f"{self.production_date} "
+                f"--build --overwrite --open-pdf"
             )
-            print("=" * 72)
-            return
 
-        self.manager.print_summary()
+            print()
+
+            print(
+                "Build selected issues:"
+            )
+
+            print(
+                f"python production.py "
+                f"{self.production_date} "
+                f"--build --issues 1 2 3 "
+                f"--overwrite --open-pdf"
+            )
+
+        else:
+            print(
+                "Save generated_content.json at "
+                "the canonical file location "
+                "before building."
+            )
+
+        print("=" * 72)

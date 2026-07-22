@@ -176,6 +176,26 @@ def _display_date(value: date) -> str:
 
     return value.strftime("%d-%m-%y")
 
+def _next_production_date(
+    publication_date: date,
+) -> date:
+    """
+    Return the next scheduled production date.
+
+    Production runs from Monday to Saturday.
+    Sunday is skipped, so Saturday recall is scheduled
+    for Monday.
+    """
+
+    next_date = (
+        publication_date
+        + timedelta(days=1)
+    )
+
+    if next_date.weekday() == 6:
+        next_date += timedelta(days=1)
+
+    return next_date
 
 def _document_code(value: date) -> str:
     """Return the compact TUI document code."""
@@ -309,9 +329,13 @@ def _default_issue_index() -> dict[str, Any]:
 
 
 def _default_recall_index() -> dict[str, Any]:
+    """Return the default recall queue and tracking index."""
+
     return {
         "repository_version": "2.0",
         "last_updated": None,
+        "next_recall_number": 1,
+        "recalls": {},
         "dates": {},
         "questions": {},
     }
@@ -614,10 +638,10 @@ def normalise_issue(
     )
 
     next_day_text = _display_date(
+     _next_production_date(
         publication_date
-        + timedelta(days=1)
+     )
     )
-
     timestamp = _timestamp()
 
     normalised = {
@@ -863,7 +887,30 @@ def build_pdf_dataset(
     issues: list[dict[str, Any]],
     previous_day_questions: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Build the final PDF source dataset."""
+    """
+    Build the final PDF source dataset using the latest
+    pending recall sets.
+    """
+
+    recall_source_dates = sorted(
+        {
+            str(
+                recall.get(
+                    "explained_on",
+                    "",
+                )
+            ).strip()
+            for recall in previous_day_questions
+            if str(
+                recall.get(
+                    "explained_on",
+                    "",
+                )
+            ).strip()
+        },
+        key=_parse_date,
+        reverse=True,
+    )
 
     return {
         "repository_version": "2.0",
@@ -873,9 +920,10 @@ def build_pdf_dataset(
         "daily_code": _document_code(
             publication_date
         ),
-        "recall_questions_from": _display_date(
-            publication_date
-            - timedelta(days=1)
+        "recall_questions_from": (
+            ", ".join(recall_source_dates)
+            if recall_source_dates
+            else None
         ),
         "recall_questions": previous_day_questions,
         "issues": [
@@ -1024,24 +1072,59 @@ def build_recall_schedule(
     previous_day_questions: list[dict[str, Any]],
     current_issues: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Build previous, present and next-day recall tracking."""
+    """
+    Build latest-pending, present-day and future recall tracking.
 
-    previous_day = (
+    The previous_day key is retained for compatibility, but
+    its questions are the latest pending recalls selected for
+    today's PDF.
+    """
+
+    next_production_date = _next_production_date(
         publication_date
-        - timedelta(days=1)
     )
 
-    next_day = (
-        publication_date
-        + timedelta(days=1)
+    recall_source_dates = sorted(
+        {
+            str(
+                recall.get(
+                    "explained_on",
+                    "",
+                )
+            ).strip()
+            for recall in previous_day_questions
+            if str(
+                recall.get(
+                    "explained_on",
+                    "",
+                )
+            ).strip()
+        },
+        key=_parse_date,
+        reverse=True,
+    )
+
+    recall_source_text = (
+        ", ".join(recall_source_dates)
+        if recall_source_dates
+        else None
     )
 
     present_questions = [
         {
             "issue_id": issue["issue_id"],
             "issue_title": issue["title"],
-            "questions": (
+            "questions": deepcopy(
                 issue["recall"]["questions"]
+            ),
+            "anchors": deepcopy(
+                issue.get(
+                    "youtube",
+                    {},
+                ).get(
+                    "anchors",
+                    [],
+                )
             ),
             "youtube_explanation_date": (
                 _display_date(
@@ -1058,11 +1141,9 @@ def build_recall_schedule(
             publication_date
         ),
         "previous_day": {
-            "date": _display_date(
-                previous_day
-            ),
+            "date": recall_source_text,
             "purpose": (
-                "Used in today's PDF recall section"
+                "Latest pending recall sets used in today's PDF"
             ),
             "questions": previous_day_questions,
         },
@@ -1071,54 +1152,130 @@ def build_recall_schedule(
                 publication_date
             ),
             "purpose": (
-                "Explained through today's YouTube Shorts"
+                "Explained through today's YouTube Shorts "
+                "and Telegram cards"
             ),
             "questions": present_questions,
         },
         "next_day": {
             "date": _display_date(
-                next_day
+                next_production_date
             ),
             "purpose": (
-                "Scheduled for tomorrow's PDF recall section"
+                "Today's recalls become eligible from the "
+                "next production day and remain pending until used"
             ),
             "questions": present_questions,
         },
         "generated_at": _timestamp(),
     }
-
-
 # ============================================================
 # RECALL LOOKUP
 # ============================================================
 
-def get_previous_day_recall_questions(
+def get_latest_pending_recall_questions(
     publication_date: date,
+    required_count: int,
 ) -> list[dict[str, Any]]:
-    """Get recall sets scheduled for the current day."""
+    """
+    Return the latest pending recall sets for today's PDF.
+
+    One issue produces one recall set. The number returned
+    should match today's issue count whenever enough pending
+    recalls exist.
+
+    Recalls generated on the current publication date are
+    excluded because they belong to today's YouTube and
+    Telegram outputs, not today's PDF recall section.
+    """
+
+    if required_count <= 0:
+        return []
 
     recall_index = _read_json(
         RECALL_INDEX_FILE,
         _default_recall_index(),
     )
 
-    date_record = (
-        recall_index
-        .get("dates", {})
-        .get(
-            _display_date(
-                publication_date
-            ),
-            {},
-        )
+    recalls = recall_index.setdefault(
+        "recalls",
+        {},
     )
 
-    return deepcopy(
-        date_record.get(
-            "scheduled_for_pdf",
-            [],
+    target_date = publication_date
+
+    eligible_recalls: list[dict[str, Any]] = []
+
+    for recall in recalls.values():
+        if not isinstance(recall, dict):
+            continue
+
+        if recall.get("status") != "pending":
+            continue
+
+        explained_on = str(
+            recall.get(
+                "explained_on",
+                "",
+            )
+        ).strip()
+
+        eligible_on = str(
+            recall.get(
+                "eligible_for_pdf_on",
+                recall.get(
+                    "scheduled_for_pdf_on",
+                    "",
+                ),
+            )
+        ).strip()
+
+        if not explained_on:
+            continue
+
+        try:
+            explained_date = _parse_date(
+                explained_on
+            )
+        except RepositoryError:
+            continue
+
+        if explained_date >= target_date:
+            continue
+
+        if eligible_on:
+            try:
+                eligible_date = _parse_date(
+                    eligible_on
+                )
+            except RepositoryError:
+                continue
+
+            if eligible_date > target_date:
+                continue
+
+        eligible_recalls.append(
+            deepcopy(recall)
         )
+
+    eligible_recalls.sort(
+        key=lambda recall: (
+            _parse_date(
+                recall["explained_on"]
+            ),
+            int(
+                recall.get(
+                    "recall_number",
+                    0,
+                )
+            ),
+        ),
+        reverse=True,
     )
+
+    return eligible_recalls[
+        :required_count
+    ]
 
 
 # ============================================================
@@ -1240,7 +1397,13 @@ def update_recall_index(
     publication_date: date,
     issues: list[dict[str, Any]],
 ) -> None:
-    """Schedule today's recall questions for tomorrow."""
+    """
+    Add today's issue recalls to the pending recall queue.
+
+    One issue creates one numbered recall set. The recall
+    becomes eligible on the next production day and remains
+    pending until selected for a future PDF.
+    """
 
     index = _read_json(
         RECALL_INDEX_FILE,
@@ -1257,66 +1420,170 @@ def update_recall_index(
         {},
     )
 
+    recalls_index = index.setdefault(
+        "recalls",
+        {},
+    )
+
+    next_recall_number = int(
+        index.get(
+            "next_recall_number",
+            1,
+        )
+    )
+
     publication_text = _display_date(
         publication_date
     )
 
-    scheduled_date = (
+    eligible_date = _next_production_date(
         publication_date
-        + timedelta(days=1)
     )
 
-    scheduled_text = _display_date(
-        scheduled_date
+    eligible_text = _display_date(
+        eligible_date
     )
 
     entries: list[dict[str, Any]] = []
 
     for issue in issues:
-        entry = {
-            "issue_id": issue["issue_id"],
+        issue_id = issue["issue_id"]
+
+        existing_recall = next(
+            (
+                recall
+                for recall in recalls_index.values()
+                if isinstance(recall, dict)
+                and recall.get("issue_id") == issue_id
+            ),
+            None,
+        )
+
+        if existing_recall:
+            recall_id = str(
+                existing_recall["recall_id"]
+            )
+
+            recall_number = int(
+                existing_recall.get(
+                    "recall_number",
+                    0,
+                )
+            )
+
+            recall_status = str(
+                existing_recall.get(
+                    "status",
+                    "pending",
+                )
+            )
+
+            used_in_pdf_on = (
+                existing_recall.get(
+                    "used_in_pdf_on"
+                )
+            )
+        else:
+            recall_number = next_recall_number
+            recall_id = (
+                f"R-{recall_number:06d}"
+            )
+            recall_status = "pending"
+            used_in_pdf_on = None
+            next_recall_number += 1
+
+        recall_entry = {
+            "recall_id": recall_id,
+            "recall_number": recall_number,
+            "issue_id": issue_id,
             "issue_title": issue["title"],
-            "questions": (
+            "questions": deepcopy(
                 issue["recall"]["questions"]
             ),
+            "anchors": deepcopy(
+                issue.get(
+                    "youtube",
+                    {},
+                ).get(
+                    "anchors",
+                    [],
+                )
+            ),
             "explained_on": publication_text,
-            "scheduled_for_pdf_on": scheduled_text,
-            "status": "scheduled",
+            "eligible_for_pdf_on": eligible_text,
+            "scheduled_for_pdf_on": eligible_text,
+            "used_in_pdf_on": used_in_pdf_on,
+            "status": recall_status,
         }
 
-        entries.append(entry)
+        recalls_index[recall_id] = deepcopy(
+            recall_entry
+        )
+
+        entries.append(
+            deepcopy(recall_entry)
+        )
 
         for number, question in enumerate(
             issue["recall"]["questions"],
             start=1,
         ):
             question_id = (
-                f"{issue['issue_id']}-RQ{number}"
+                f"{issue_id}-RQ{number}"
+            )
+
+            existing_question = questions_index.get(
+                question_id,
+                {},
             )
 
             questions_index[question_id] = {
                 "question_id": question_id,
-                "issue_id": issue["issue_id"],
+                "recall_id": recall_id,
+                "recall_number": recall_number,
+                "issue_id": issue_id,
                 "issue_title": issue["title"],
                 "question_number": number,
                 "question": question,
                 "explained_on": publication_text,
-                "scheduled_for_pdf_on": (
-                    scheduled_text
+                "eligible_for_pdf_on": eligible_text,
+                "scheduled_for_pdf_on": eligible_text,
+                "used_in_pdf_on": (
+                    existing_question.get(
+                        "used_in_pdf_on"
+                    )
                 ),
-                "used_in_pdf_on": None,
-                "status": "scheduled",
+                "status": existing_question.get(
+                    "status",
+                    "pending",
+                ),
             }
 
     dates.setdefault(
         publication_text,
         {},
-    )["explained_on_youtube"] = entries
+    )["explained_on_youtube"] = deepcopy(
+        entries
+    )
 
     dates.setdefault(
-        scheduled_text,
+        eligible_text,
         {},
-    )["scheduled_for_pdf"] = entries
+    )["eligible_for_pdf"] = deepcopy(
+        entries
+    )
+
+    # Retained for compatibility with existing readers.
+    dates.setdefault(
+        eligible_text,
+        {},
+    )["scheduled_for_pdf"] = deepcopy(
+        entries
+    )
+
+    index["next_recall_number"] = (
+        next_recall_number
+    )
 
     index["last_updated"] = _timestamp()
 
@@ -1325,19 +1592,28 @@ def update_recall_index(
         index,
     )
 
-
 def mark_recall_questions_used(
     publication_date: date,
-    previous_day_questions: list[dict[str, Any]],
+    selected_recalls: list[dict[str, Any]],
 ) -> None:
-    """Mark recall questions as used in today's PDF."""
+    """
+    Mark only the recall sets selected for today's PDF as used.
 
-    if not previous_day_questions:
+    Any pending recalls not selected remain available for a
+    future production day.
+    """
+
+    if not selected_recalls:
         return
 
     index = _read_json(
         RECALL_INDEX_FILE,
         _default_recall_index(),
+    )
+
+    recalls_index = index.setdefault(
+        "recalls",
+        {},
     )
 
     questions_index = index.setdefault(
@@ -1349,10 +1625,51 @@ def mark_recall_questions_used(
         publication_date
     )
 
-    for entry in previous_day_questions:
-        issue_id = entry.get(
-            "issue_id",
-            "",
+    used_entries: list[dict[str, Any]] = []
+
+    for selected in selected_recalls:
+        recall_id = str(
+            selected.get(
+                "recall_id",
+                "",
+            )
+        ).strip()
+
+        issue_id = str(
+            selected.get(
+                "issue_id",
+                "",
+            )
+        ).strip()
+
+        if (
+            recall_id
+            and recall_id in recalls_index
+        ):
+            recalls_index[
+                recall_id
+            ]["used_in_pdf_on"] = publication_text
+
+            recalls_index[
+                recall_id
+            ]["status"] = "used"
+
+            used_entry = deepcopy(
+                recalls_index[recall_id]
+            )
+        else:
+            used_entry = deepcopy(
+                selected
+            )
+
+            used_entry[
+                "used_in_pdf_on"
+            ] = publication_text
+
+            used_entry["status"] = "used"
+
+        used_entries.append(
+            used_entry
         )
 
         for number in (1, 2):
@@ -1376,7 +1693,7 @@ def mark_recall_questions_used(
         publication_text,
         {},
     )["used_in_pdf"] = deepcopy(
-        previous_day_questions
+        used_entries
     )
 
     index["last_updated"] = _timestamp()
@@ -1597,9 +1914,12 @@ def generate_repository_package(
     )
 
     previous_day_questions = (
-        get_previous_day_recall_questions(
-            parsed_date
-        )
+    get_latest_pending_recall_questions(
+        publication_date=parsed_date,
+        required_count=len(
+            normalised_issues
+        ),
+      )
     )
 
     selected_dataset = {

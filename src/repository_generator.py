@@ -2019,10 +2019,10 @@ def generate_repository_package(
     )
 
     mark_recall_questions_used(
-        publication_date=parsed_date,
-        previous_day_questions=(
-            previous_day_questions
-        ),
+    publication_date=parsed_date,
+    selected_recalls=(
+        previous_day_questions
+     ),
     )
 
     update_recall_index(

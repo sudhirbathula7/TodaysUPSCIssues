@@ -38,7 +38,10 @@ import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
-
+from src.publishing.published_collector import (  # noqa: E402
+    PublishedCollectorError,
+    collect_published_files,
+)
 
 # ==========================================================
 # PROJECT ROOT
@@ -447,13 +450,35 @@ def main() -> int:
         print("-" * 72)
 
         run_production(
-            production_date
+        production_date
         )
+
+        print("-" * 72)
+        print(
+        "Collecting publication-ready files..."
+        )
+        print("-" * 72)
+
+        published_result = collect_published_files(
+        production_date=production_date,
+        overwrite=True,
+        )
+
+        print_success(
+         "Published folder created"
+                )
+
+        for published_file in (
+          published_result.created_files
+        ):
+         print(
+        f"  - {published_file.name}"
+    )
 
         print()
         print_heading(
-            "VERSION 3.1 DAILY PRODUCTION COMPLETED"
-        )
+    "VERSION 3.1 DAILY PRODUCTION COMPLETED"
+)
 
         print(
             f"Date       : {production_date}"
@@ -467,8 +492,8 @@ def main() -> int:
             f"{paths.repository_daily_dir}"
         )
         print(
-            f"Outputs    : "
-            f"{paths.daily_output_dir}"
+            f"Published  : "
+            f"{published_result.published_folder}"
         )
 
         print("=" * 72)
@@ -478,6 +503,7 @@ def main() -> int:
     except (
         DailyLauncherError,
         ProductionControllerError,
+        PublishedCollectorError,
         FileNotFoundError,
         FileExistsError,
         ValueError,

@@ -108,12 +108,12 @@ validation_reports/
 # Version 3.1 Daily User Input
 # ----------------------------------------------------------
 
-input/generated_content.json
+input/DAILY_INPUT.json
 # ----------------------------------------------------------
 # Version 3.1 Daily User Input
 # ----------------------------------------------------------
 
-input/generated_content.json
+input/DAILY_INPUT.json
 
 # ----------------------------------------------------------
 # Version 3.1 Published Deliverables

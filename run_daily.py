@@ -25,9 +25,9 @@ The launcher automatically:
 2. Extracts the production date.
 3. Creates the internal production session.
 4. Copies the canonical JSON into the session.
-5. Runs the existing Version 3.0 production pipeline.
+5. Runs the existing Version 3.1 production pipeline.
 
-The Version 3.0 production engine remains unchanged.
+The Version 3.1 production engine remains unchanged.
 ============================================================
 """
 
@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from src.publishing.published_collector import (  # noqa: E402
@@ -112,7 +112,7 @@ def print_success(
 ) -> None:
     """Print a success message."""
 
-    print(f"âœ“ {message}")
+    print(f"✓ {message}")
 
 
 # ==========================================================
@@ -183,43 +183,36 @@ def extract_production_date(
     data: dict[str, Any],
 ) -> str:
     """
-    Extract and validate production.production_date.
+    Extract production.production_date.
 
-    Required format:
-        YYYY-MM-DD
+    DAILY_INPUT.json uses DD-MM-YYYY.
+    The internal production controller uses YYYY-MM-DD.
     """
 
-    production = data.get(
-        "production"
-    )
+    production = data.get("production")
 
     if not isinstance(production, dict):
         raise DailyLauncherError(
-            "The JSON does not contain a valid "
-            "'production' object."
+            "The JSON does not contain a valid 'production' object."
         )
 
     production_date = str(
-        production.get(
-            "production_date",
-            "",
-        )
+        production.get("production_date", "")
     ).strip()
 
     if not production_date:
         raise DailyLauncherError(
-            "The JSON does not contain "
-            "'production.production_date'."
+            "The JSON does not contain 'production.production_date'."
         )
 
     try:
-        parsed_date = date.fromisoformat(
-            production_date
-        )
+        parsed_date = datetime.strptime(
+            production_date,
+            "%d-%m-%Y",
+        ).date()
     except ValueError as error:
         raise DailyLauncherError(
-            "production.production_date must use "
-            "YYYY-MM-DD format.\n"
+            "production.production_date must use DD-MM-YYYY format.\n"
             f"Received: {production_date!r}"
         ) from error
 
@@ -235,29 +228,20 @@ def validate_basic_input(
     production_date: str,
 ) -> None:
     """
-    Perform launcher-level checks before Version 3.0 validation.
+    Perform launcher-level checks before Version 3.1 validation.
 
-    Full canonical validation remains the responsibility of
-    the existing ProductionValidator.
+    Full validation remains the responsibility of
+    ProductionValidator.
     """
 
-    schema_version = str(
-        data.get(
-            "schema_version",
-            "",
-        )
-    ).strip()
+    production = data.get("production")
 
-    if schema_version != "3.0":
+    if not isinstance(production, dict):
         raise DailyLauncherError(
-            "Unsupported schema_version.\n"
-            "Expected: 3.0\n"
-            f"Received: {schema_version or 'missing'}"
+            "The JSON field 'production' must contain an object."
         )
 
-    issues = data.get(
-        "issues"
-    )
+    issues = data.get("issues")
 
     if not isinstance(issues, list):
         raise DailyLauncherError(
@@ -269,18 +253,39 @@ def validate_basic_input(
             "The JSON does not contain any selected issues."
         )
 
-    production = data["production"]
-
     declared_issue_count = production.get(
-        "issue_count"
+        "total_issues"
     )
 
     if declared_issue_count != len(issues):
         raise DailyLauncherError(
-            "The production issue count does not match "
+            "The production total_issues value does not match "
             "the number of issues in the JSON.\n"
             f"Declared : {declared_issue_count}\n"
             f"Actual   : {len(issues)}"
+        )
+
+    expected_schema_date = (
+        production_date[8:10]
+        + "-"
+        + production_date[5:7]
+        + "-"
+        + production_date[0:4]
+    )
+
+    schema_date = str(
+        production.get(
+            "production_date",
+            "",
+        )
+    ).strip()
+
+    if schema_date != expected_schema_date:
+        raise DailyLauncherError(
+            "The production date inside DAILY_INPUT.json does "
+            "not match the requested production date.\n"
+            f"Expected : {expected_schema_date}\n"
+            f"Received : {schema_date or 'missing'}"
         )
 
     expected_edition_code = (
@@ -305,6 +310,48 @@ def validate_basic_input(
             f"Received : {edition_code or 'missing'}"
         )
 
+    issue_numbers: list[int] = []
+
+    for index, issue in enumerate(
+        issues,
+        start=1,
+    ):
+        if not isinstance(issue, dict):
+            raise DailyLauncherError(
+                f"Issue {index} must be a JSON object."
+            )
+
+        metadata = issue.get("metadata")
+
+        if not isinstance(metadata, dict):
+            raise DailyLauncherError(
+                f"Issue {index} must contain a metadata object."
+            )
+
+        issue_number = metadata.get(
+            "issue_number"
+        )
+
+        if (
+            not isinstance(issue_number, int)
+            or isinstance(issue_number, bool)
+        ):
+            raise DailyLauncherError(
+                f"Issue {index} has an invalid metadata.issue_number."
+            )
+
+        issue_numbers.append(issue_number)
+
+    expected_numbers = list(
+        range(1, len(issues) + 1)
+    )
+
+    if sorted(issue_numbers) != expected_numbers:
+        raise DailyLauncherError(
+            "Issue numbers must be sequential from 1.\n"
+            f"Expected : {expected_numbers}\n"
+            f"Received : {sorted(issue_numbers)}"
+        )
 
 # ==========================================================
 # SESSION PREPARATION
@@ -315,7 +362,7 @@ def prepare_internal_session(
     production_date: str,
 ) -> ProductionPaths:
     """
-    Create the internal Version 3.0 session when required and
+    Create the internal Version 3.1 session when required and
     copy the daily input into its canonical location.
     """
 
@@ -382,7 +429,7 @@ def run_production(
 ) -> None:
     """
     Run all issues contained in the daily JSON through the
-    existing Version 3.0 production controller.
+    existing Version 3.1 production controller.
     """
 
     controller = ProductionController(
@@ -404,7 +451,7 @@ def main() -> int:
     """Run Version 3.1 daily production."""
 
     print_heading(
-        "VERSION 3.1 â€” ONE-FILE DAILY PRODUCTION"
+        "VERSION 3.1 — ONE-FILE DAILY PRODUCTION"
     )
 
     print(
@@ -444,7 +491,7 @@ def main() -> int:
 
         print("-" * 72)
         print(
-            "Starting the existing Version 3.0 "
+            "Starting the existing Version 3.1 "
             "production engine..."
         )
         print("-" * 72)

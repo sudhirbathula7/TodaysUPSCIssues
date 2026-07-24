@@ -303,7 +303,7 @@ def validate_recall_questions(
     result: dict[str, Any],
 ) -> None:
     """
-    Confirms that exactly two recall questions are present.
+    Confirm that exactly one recall question is present.
     """
 
     questions = issue.get(
@@ -331,10 +331,10 @@ def validate_recall_questions(
         )
     ]
 
-    if len(valid_questions) != 2:
+    if len(valid_questions) != 1:
         add_error(
             result,
-            f"Issue {issue_position}: Exactly 2 recall questions "
+            f"Issue {issue_position}: Exactly one recall question "
             f"are required. Detected: {len(valid_questions)}.",
         )
         return

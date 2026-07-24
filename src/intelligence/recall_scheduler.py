@@ -119,7 +119,7 @@ class RecallReview:
     publication_date: str
     interval_day: int
     review_date: str
-    questions: tuple[str, str]
+    questions: tuple[str]
     status: str
     completed_on: str | None
 
@@ -351,8 +351,8 @@ def load_recall_index() -> dict[str, Any]:
 
 def _extract_recall_questions(
     issue: dict[str, Any],
-) -> tuple[str, str]:
-    """Extract exactly two recall questions."""
+) -> tuple[str]:
+    """Extract exactly one recall question."""
 
     recall = issue.get(
         "recall",
@@ -375,28 +375,23 @@ def _extract_recall_questions(
             "Recall questions must be a list or tuple."
         )
 
-    if len(questions) != 2:
+    if len(questions) != 1:
         raise InvalidRecallIssueError(
             "Each issue must contain exactly "
-            "two recall questions."
+            "one recall question."
         )
 
     question_1 = str(
         questions[0]
     ).strip()
 
-    question_2 = str(
-        questions[1]
-    ).strip()
-
-    if not question_1 or not question_2:
+    if not question_1:
         raise InvalidRecallIssueError(
-            "Recall questions cannot be empty."
+            "Recall question cannot be empty."
         )
 
     return (
         question_1,
-        question_2,
     )
 
 
@@ -833,7 +828,7 @@ def get_reviews_due(
                 questions,
                 (list, tuple),
             )
-            or len(questions) != 2
+            or len(questions) != 1
         ):
             continue
 
@@ -871,8 +866,8 @@ def get_reviews_due(
                 ),
                 questions=(
                     str(questions[0]),
-                    str(questions[1]),
-                ),
+
+                    ),
                 status=status,
                 completed_on=review.get(
                     "completed_on"
@@ -1048,7 +1043,7 @@ def mark_review_completed(
         review_date=review_date,
         questions=(
             str(questions[0]),
-            str(questions[1]),
+            
         ),
         status="completed",
         completed_on=completion_text,
@@ -1234,10 +1229,7 @@ def print_due_reviews(
             f"   Q1       : {review.questions[0]}"
         )
 
-        print(
-            f"   Q2       : {review.questions[1]}"
-        )
-
+        
         print()
 
     print("=" * 72)

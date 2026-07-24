@@ -367,7 +367,7 @@ def convert_issue_to_v21(
     recall_questions = _clean_string_list(
         recall.get("recall_questions"),
         field_name="recall.recall_questions",
-        minimum=2,
+        minimum=1,
     )
 
     anchors = _clean_string_list(
@@ -376,10 +376,9 @@ def convert_issue_to_v21(
         minimum=5,
     )
 
-    if len(recall_questions) != 2:
-        raise CanonicalInputError(
-            "Version 2.1 requires exactly two "
-            "recall questions per issue."
+    if len(recall_questions) != 1:
+          raise CanonicalInputError(
+          "Exactly one recall question is required per issue."
         )
 
     return {

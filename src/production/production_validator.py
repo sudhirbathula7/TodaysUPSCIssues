@@ -366,7 +366,7 @@ class ProductionValidator:
         if recall is None:
             return
         self._exact_fields(recall, REQUIRED_RECALL_FIELDS, path, result, "MISSING_RECALL_FIELD", "UNKNOWN_RECALL_FIELD")
-        self._string_list(recall.get("recall_questions"), f"{path}.recall_questions", result, exact=2)
+        self._string_list(recall.get("recall_questions"), f"{path}.recall_questions", result, exact=1)
         self._string_list(recall.get("revision_anchors"), f"{path}.revision_anchors", result, exact=5)
 
     def _validate_outputs(self, value: Any, path: str, result: ValidationResult) -> None:

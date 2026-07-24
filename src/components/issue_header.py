@@ -15,6 +15,7 @@ from reportlab.platypus import Paragraph
 from src.components.helpers import draw_horizontal_line
 from src.layout import Rectangle
 from src.styles import BOLD_FONT, COLOURS, FONTS
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 
 # ==========================================================
@@ -29,7 +30,7 @@ TITLE_LEADING = 14.4
 TITLE_MIN_LEADING = 11.8
 
 GS_FONT_SIZE = 8.0
-CATEGORY_FONT_SIZE = 7.3
+CATEGORY_FONT_SIZE = 6.2
 
 
 # ==========================================================
@@ -47,7 +48,7 @@ TITLE_META_GAP = 8.0
 
 VERTICAL_PADDING = 5.0
 
-META_LINE_GAP = 2.0
+META_LINE_GAP = 4.0
 DIVIDER_WIDTH = 0.45
 
 
@@ -125,36 +126,44 @@ def _build_title(
 # ==========================================================
 
 def _major_topic_lines(
-    category: str,
-) -> list[str]:
+     text: str,
+     font_name: str,
+     font_size: float,
+     max_width: float,
+    ) -> list[str]:
     """
-    Keep only the first major topic before '|'.
-
-    Examples:
-        Disaster Management | Urban Governance
-            -> ["Disaster", "Management"]
-
-        Polity | Parliament
-            -> ["Polity"]
+    Wrap the GS subject into the minimum number of lines
+    that fit inside the available width.
     """
 
-    if not category:
+    words = text.split()
+
+    if not words:
         return []
 
-    major_topic = (
-        category
-        .split("|", maxsplit=1)[0]
-        .strip()
-    )
+    lines: list[str] = []
+    current = words[0]
 
-    if not major_topic:
-        return []
+    for word in words[1:]:
 
-    return [
-        word
-        for word in major_topic.split()
-        if word
-    ]
+        trial = f"{current} {word}"
+
+        if (
+            stringWidth(
+                trial,
+                font_name,
+                font_size,
+            )
+            <= max_width
+        ):
+            current = trial
+        else:
+            lines.append(current)
+            current = word
+
+    lines.append(current)
+
+    return lines
 
 
 # ==========================================================
@@ -275,8 +284,17 @@ def draw_issue_header(
         - (ISSUE_NUMBER_FONT_SIZE * 0.34)
     )
 
+    major_topic = (
+      category
+      .split("|", maxsplit=1)[0]
+     .strip()
+    )
+
     topic_lines = _major_topic_lines(
-        category
+      text=major_topic,
+      font_name=FONTS.issue_meta.name,
+      font_size=CATEGORY_FONT_SIZE,
+      max_width=META_AREA_WIDTH - 4.0,
     )
 
     meta_rows: list[

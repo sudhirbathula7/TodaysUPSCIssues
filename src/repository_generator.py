@@ -26,7 +26,7 @@ The generator:
 2. Creates permanent issue records.
 3. Creates the dated daily repository folder.
 4. Tracks PDF, YouTube, Telegram and website usage.
-5. Tracks previous, present and next-day recall questions.
+5. Tracks previous, present and next-day recall question.
 6. Maintains central issue, recall and usage indexes.
 7. Prevents duplicate issue IDs.
 8. Preserves source editorials.
@@ -469,7 +469,7 @@ def _get_first_available(
 def _extract_recall_questions(
     issue: dict[str, Any],
 ) -> list[str]:
-    """Extract exactly two recall questions."""
+    """Extract exactly one recall question."""
 
     value = _get_first_available(
         issue,
@@ -505,7 +505,7 @@ def _extract_recall_questions(
             ]
         )
 
-    return questions[:2]
+    return questions[:1]
 
 
 def _extract_quick_facts(
@@ -617,10 +617,10 @@ def normalise_issue(
         issue
     )
 
-    if len(recall_questions) != 2:
+    if len(recall_questions) != 1:
         raise RepositoryValidationError(
             f"{issue_id} must contain exactly "
-            "two recall questions."
+            "one recall question."
         )
 
     quick_facts = _extract_quick_facts(
@@ -860,10 +860,10 @@ def validate_normalised_issue(
             "questions",
             [],
         )
-    ) != 2:
+    ) != 1:
         raise RepositoryValidationError(
             f"{issue['issue_id']} must contain "
-            "two recall questions."
+            "one recall question."
         )
 
     if len(
@@ -1672,7 +1672,7 @@ def mark_recall_questions_used(
             used_entry
         )
 
-        for number in (1, 2):
+        for number in (1,):
             question_id = (
                 f"{issue_id}-RQ{number}"
             )

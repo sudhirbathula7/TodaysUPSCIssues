@@ -2,13 +2,13 @@
 ============================================================
 TODAY'S UPSC ISSUES
 PDF GENERATOR
-Version 2.0
+Version 3.1
 Created by Sudhir
 ============================================================
 
 PURPOSE
 
-Generates the final portrait PDF from the Version 2.0 daily
+Generates the final portrait PDF from the Version 3.1 daily
 PDF dataset.
 
 WORKFLOW
@@ -468,55 +468,83 @@ def validate_pdf_dataset(
 # RECALL QUESTION RESOLUTION
 # ============================================================
 
+RecallSet = dict[str, list[str]]
+
+
+def _clean_string_list(
+    value: Any,
+    *,
+    expected_count: int,
+) -> list[str]:
+    """Return a clean string list with the required item count."""
+
+    if not isinstance(value, (list, tuple)):
+        return []
+
+    cleaned = [_clean_text(item) for item in value]
+
+    if len(cleaned) != expected_count or not all(cleaned):
+        return []
+
+    return cleaned
+
+
+def _build_recall_set(
+    questions: Any,
+    anchors: Any,
+) -> RecallSet | None:
+    """Build one valid Version 3.1 recall set."""
+
+    cleaned_questions = _clean_string_list(
+        questions,
+        expected_count=1,
+    )
+
+    cleaned_anchors = _clean_string_list(
+        anchors,
+        expected_count=5,
+    )
+
+    if not cleaned_questions or not cleaned_anchors:
+        return None
+
+    return {
+        "questions": cleaned_questions,
+        "anchors": cleaned_anchors,
+    }
+
+
 def _extract_scheduled_recall_sets(
     dataset: dict[str, Any],
-) -> list[list[str]]:
-    """Extract previous-day recall questions from pdf_dataset.json."""
+) -> list[RecallSet]:
+    """Extract scheduled previous-day recall sets."""
 
-    raw_recall = dataset.get(
-        "recall_questions",
-        [],
-    )
+    raw_recall = dataset.get("recall_questions", [])
 
     if not isinstance(raw_recall, list):
         return []
 
-    recall_sets: list[list[str]] = []
+    recall_sets: list[RecallSet] = []
 
     for entry in raw_recall:
-        if isinstance(entry, dict):
-            questions = entry.get(
-                "questions",
-                [],
-            )
-        else:
-            questions = entry
+        if not isinstance(entry, dict):
+            continue
 
-        if (
-            isinstance(questions, (list, tuple))
-            and len(questions) == 2
-        ):
-            cleaned_questions = [
-                _clean_text(question)
-                for question in questions
-            ]
+        recall_set = _build_recall_set(
+            questions=entry.get("questions", []),
+            anchors=entry.get("anchors", []),
+        )
 
-            if all(cleaned_questions):
-                recall_sets.append(
-                    cleaned_questions
-                )
+        if recall_set is not None:
+            recall_sets.append(recall_set)
 
     return recall_sets
 
 
 def _extract_current_recall_sets(
     publication_date: date,
-) -> list[list[str]]:
-    """
-    Extract current-day recall questions from selected_issues.json.
-
-    Used only when previous-day recall data is unavailable.
-    """
+) -> list[RecallSet]:
+    """Extract current-day recall sets for first-day fallback."""
 
     selected_issues_path = find_selected_issues_path(
         publication_date
@@ -525,48 +553,63 @@ def _extract_current_recall_sets(
     if selected_issues_path is None:
         return []
 
-    selected_dataset = _read_json(
-        selected_issues_path
-    )
+    selected_dataset = _read_json(selected_issues_path)
 
     issues = selected_dataset.get(
-        "issues",
-        [],
+        "selected_issues",
+        selected_dataset.get("issues", []),
     )
 
     if not isinstance(issues, list):
         return []
 
-    recall_sets: list[list[str]] = []
+    recall_sets: list[RecallSet] = []
 
     for issue in issues:
         if not isinstance(issue, dict):
             continue
 
-        recall = issue.get(
-            "recall",
-            {},
+        recall_set = _build_recall_set(
+            questions=issue.get("recall_questions", []),
+            anchors=issue.get("anchors", []),
         )
 
-        questions = (
-            recall.get("questions", [])
-            if isinstance(recall, dict)
-            else []
+        if recall_set is not None:
+            recall_sets.append(recall_set)
+            continue
+
+        recall = issue.get("recall", {})
+        youtube = issue.get("youtube", {})
+        telegram = issue.get("telegram", {})
+
+        if not isinstance(recall, dict):
+            recall = {}
+
+        if not isinstance(youtube, dict):
+            youtube = {}
+
+        if not isinstance(telegram, dict):
+            telegram = {}
+
+        repository_questions = recall.get(
+            "questions",
+            [],
         )
 
-        if (
-            isinstance(questions, (list, tuple))
-            and len(questions) == 2
-        ):
-            cleaned_questions = [
-                _clean_text(question)
-                for question in questions
-            ]
+        repository_anchors = (
+            recall.get("anchors", [])
+            or youtube.get("anchors", [])
+            or telegram.get("anchors", [])
+            or issue.get("anchors", [])
+        )
 
-            if all(cleaned_questions):
-                recall_sets.append(
-                    cleaned_questions
-                )
+        recall_set = _build_recall_set(
+            questions=repository_questions,
+            anchors=repository_anchors,
+        )
+
+        if recall_set is not None:
+            recall_sets.append(recall_set)
 
     return recall_sets
 
@@ -574,22 +617,18 @@ def _extract_current_recall_sets(
 def resolve_recall_sets(
     dataset: dict[str, Any],
     publication_date: date,
-) -> list[list[str]]:
+) -> list[RecallSet]:
     """
-    Resolve one recall set for each rendered issue.
+    Resolve one question-plus-anchor set for every rendered issue.
 
     Priority:
-    1. Previous-day scheduled recall questions
-    2. Current-day recall questions for development fallback
+    1. Scheduled previous-day recall sets.
+    2. Current-day sets only when scheduled data is insufficient.
     """
 
-    issue_count = len(
-        dataset["issues"]
-    )
+    issue_count = len(dataset["issues"])
 
-    recall_sets = _extract_scheduled_recall_sets(
-        dataset
-    )
+    recall_sets = _extract_scheduled_recall_sets(dataset)
 
     if len(recall_sets) < issue_count:
         current_recall_sets = _extract_current_recall_sets(
@@ -604,10 +643,11 @@ def resolve_recall_sets(
 
     if len(recall_sets) < issue_count:
         raise PDFDatasetError(
-            "There are not enough recall-question sets for "
+            "There are not enough recall sets for "
             f"{issue_count} issue(s).\n"
             f"Available recall sets: {len(recall_sets)}\n"
-            "Each issue requires exactly two recall questions."
+            "Each issue requires exactly one recall question "
+            "and five revision anchors."
         )
 
     return recall_sets[:issue_count]
@@ -665,9 +705,12 @@ def render_issue(
     issue_layout: IssueLayout,
     issue: dict[str, Any],
     issue_number: int,
-    recall_questions: list[str],
+    recall_set: RecallSet,
 ) -> None:
     """Render one complete issue using existing components."""
+
+    recall_questions = recall_set.get("questions", [])
+    recall_anchors = recall_set.get("anchors", [])
 
     try:
         draw_issue_header(
@@ -676,12 +719,8 @@ def render_issue(
             issue_number=issue_number,
             title=_clean_text(issue["title"]),
             gs_paper=_clean_text(issue["gs_paper"]),
-            category=_clean_text(
-                issue.get("category", "")
-            ),
-            rating=_clean_text(
-                issue.get("rating", "")
-            ),
+            category=_clean_text(issue.get("category", "")),
+            rating=_clean_text(issue.get("rating", "")),
         )
 
         draw_content_sections(
@@ -694,6 +733,7 @@ def render_issue(
             pdf=pdf,
             box=issue_layout.recall,
             questions=recall_questions,
+            anchors=recall_anchors,
         )
 
         draw_quick_facts(
@@ -705,9 +745,7 @@ def render_issue(
         draw_takeaway(
             pdf=pdf,
             box=issue_layout.takeaway,
-            takeaway=_clean_text(
-                issue["key_takeaway"]
-            ),
+            takeaway=_clean_text(issue["key_takeaway"]),
         )
 
     except ValueError as error:
@@ -725,7 +763,7 @@ def render_issue(
 def render_page(
     pdf: canvas.Canvas,
     issues_on_page: list[dict[str, Any]],
-    recall_sets_on_page: list[list[str]],
+    recall_sets_on_page: list[RecallSet],
     first_issue_number: int,
     publication_date: date,
     page_number: int,
@@ -769,7 +807,7 @@ def render_page(
                 first_issue_number
                 + local_index
             ),
-            recall_questions=(
+            recall_set=(
                 recall_sets_on_page[
                     local_index
                 ]
@@ -854,7 +892,7 @@ def generate_final_pdf(
     )
 
     pdf.setCreator(
-        "Today's UPSC Issues Version 2.0"
+        "Today's UPSC Issues Version 3.1"
     )
 
     try:

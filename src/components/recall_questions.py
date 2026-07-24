@@ -1,12 +1,28 @@
 """
 ============================================================
 UPSC Issues by Kumar
-Recall Questions Component
+Recall Question Component
+Version 3.1
 Created by Sudhir
+============================================================
+
+PURPOSE
+
+Draw one contextual recall question and five revision anchors
+inside the PDF recall box.
+
+DISPLAY FORMAT
+
+Topic: Recall question?
+
+Anchor 1 | Anchor 2 | Anchor 3 | Anchor 4 | Anchor 5
 ============================================================
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Any
 from xml.sax.saxutils import escape
 
 from reportlab.lib.enums import TA_LEFT
@@ -20,78 +36,97 @@ from src.components.helpers import (
 from src.layout import BOX_RADIUS, Rectangle
 from src.styles import BOLD_FONT, COLOURS
 
-
-# ==========================================================
-# TEXT
-# ==========================================================
-
-SECTION_TITLE = "RECALL QUESTIONS"
-
-
-# ==========================================================
-# ICON
-# ==========================================================
+SECTION_TITLE = "RECALL"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-
-RECALL_ICON = (
-    PROJECT_ROOT
-    / "assets"
-    / "logos"
-    / "revision"
-    / "recall.svg"
-)
+RECALL_ICON = PROJECT_ROOT / "assets" / "logos" / "revision" / "recall.svg"
 
 ICON_SIZE = 11.0
 ICON_TEXT_GAP = 5.0
 
-
-# ==========================================================
-# FONT SETTINGS
-# ==========================================================
-
 HEADING_FONT_NAME = BOLD_FONT
 HEADING_FONT_SIZE = 8.7
 
-QUESTION_FONT_NAME = BOLD_FONT
-QUESTION_FONT_SIZE = 8.7
-QUESTION_LEADING = 10.7
-
+QUESTION_FONT_NAME = "Helvetica"
+QUESTION_BOLD_FONT_NAME = "Helvetica-Bold"
+QUESTION_FONT_SIZE = 8.2
+QUESTION_LEADING = 10.2
 MIN_QUESTION_FONT_SIZE = 6.6
-MIN_QUESTION_LEADING = 7.8
+MIN_QUESTION_LEADING = 8.0
 
-LABEL_FONT_NAME = BOLD_FONT
-LABEL_FONT_SIZE = 7.5
+ANCHOR_FONT_NAME = "Helvetica"
+ANCHOR_FONT_SIZE = 6.9
+ANCHOR_LEADING = 8.3
+MIN_ANCHOR_FONT_SIZE = 5.7
+MIN_ANCHOR_LEADING = 6.8
 
 FONT_REDUCTION_STEP = 0.2
 
-
-# ==========================================================
-# SPACING
-# ==========================================================
-
 HORIZONTAL_PADDING = 8.0
 VERTICAL_PADDING = 8.0
-
-HEADING_BOTTOM_GAP = 7.0
-QUESTION_GAP = 5.0
-
-LABEL_AREA_WIDTH = 18.0
-LABEL_TEXT_GAP = 3.0
+HEADING_BOTTOM_GAP = 6.0
+QUESTION_ANCHOR_GAP = 5.0
 
 
-# ==========================================================
-# QUESTION STYLE
-# ==========================================================
+def _clean_text(value: Any, *, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string.")
+    cleaned = value.strip()
+    if not cleaned:
+        raise ValueError(f"{field_name} cannot be empty.")
+    return cleaned
 
-def _create_question_style(
-    font_size: float,
-    leading: float,
-) -> ParagraphStyle:
-    """
-    Create the recall-question paragraph style.
-    """
 
+def _clean_anchors(anchors: Any) -> list[str]:
+    if not isinstance(anchors, (list, tuple)):
+        raise TypeError("Revision anchors must be supplied as a list or tuple.")
+
+    cleaned: list[str] = []
+    for index, anchor in enumerate(anchors, start=1):
+        value = _clean_text(anchor, field_name=f"Revision anchor {index}")
+        if value not in cleaned:
+            cleaned.append(value)
+
+    if len(cleaned) != 5:
+        raise ValueError(
+            "Revision anchors must contain exactly five unique non-empty items."
+        )
+    return cleaned
+
+
+def _extract_question(questions: Any) -> str:
+    if isinstance(questions, str):
+        return _clean_text(questions, field_name="Recall question")
+
+    if not isinstance(questions, (list, tuple)):
+        raise TypeError(
+            "Recall question must be supplied as a string, list or tuple."
+        )
+
+    if len(questions) != 1:
+        raise ValueError("Recall Questions must contain exactly one question.")
+
+    return _clean_text(questions[0], field_name="Recall question")
+
+
+def _format_question_markup(question: str) -> str:
+    if ":" not in question:
+        return escape(question)
+
+    topic, remainder = question.split(":", 1)
+    topic = topic.strip()
+    remainder = remainder.strip()
+
+    if not topic or not remainder:
+        return escape(question)
+
+    return (
+        f'<font name="{QUESTION_BOLD_FONT_NAME}">{escape(topic)}:</font> '
+        f"{escape(remainder)}"
+    )
+
+
+def _question_style(font_size: float, leading: float) -> ParagraphStyle:
     return ParagraphStyle(
         name=f"recall_question_{font_size:.1f}",
         fontName=QUESTION_FONT_NAME,
@@ -107,141 +142,101 @@ def _create_question_style(
     )
 
 
-# ==========================================================
-# QUESTION FITTING
-# ==========================================================
-
-def _fit_questions(
-    question_1: str,
-    question_2: str,
-    text_width: float,
-    available_height: float,
-) -> tuple[
-    Paragraph,
-    float,
-    Paragraph,
-    float,
-]:
-    """
-    Fit both questions together inside the available area.
-
-    Both questions use the same font size so the box remains
-    visually consistent.
-    """
-
-    if text_width <= 0:
-        raise ValueError(
-            "Recall question width must be greater than zero."
-        )
-
-    if available_height <= 0:
-        raise ValueError(
-            "Recall question height must be greater than zero."
-        )
-
-    font_size = QUESTION_FONT_SIZE
-    leading = QUESTION_LEADING
-
-    while font_size >= MIN_QUESTION_FONT_SIZE:
-        style = _create_question_style(
-            font_size=font_size,
-            leading=leading,
-        )
-
-        paragraph_1 = Paragraph(
-            escape(question_1),
-            style,
-        )
-
-        paragraph_2 = Paragraph(
-            escape(question_2),
-            style,
-        )
-
-        _, height_1 = paragraph_1.wrap(
-            text_width,
-            available_height,
-        )
-
-        _, height_2 = paragraph_2.wrap(
-            text_width,
-            available_height,
-        )
-
-        total_required_height = (
-            height_1
-            + QUESTION_GAP
-            + height_2
-        )
-
-        if total_required_height <= available_height:
-            return (
-                paragraph_1,
-                height_1,
-                paragraph_2,
-                height_2,
-            )
-
-        font_size -= FONT_REDUCTION_STEP
-        leading = max(
-            MIN_QUESTION_LEADING,
-            leading - FONT_REDUCTION_STEP,
-        )
-
-    raise ValueError(
-        "Recall questions are too long to fit safely inside "
-        "the allocated box. Reduce their length slightly."
+def _anchor_style(font_size: float, leading: float) -> ParagraphStyle:
+    return ParagraphStyle(
+        name=f"recall_anchors_{font_size:.1f}",
+        fontName=ANCHOR_FONT_NAME,
+        fontSize=font_size,
+        leading=leading,
+        textColor=COLOURS.primary,
+        alignment=TA_LEFT,
+        spaceBefore=0,
+        spaceAfter=0,
+        splitLongWords=False,
+        allowWidows=0,
+        allowOrphans=0,
     )
 
 
-# ==========================================================
-# DRAW RECALL QUESTIONS
-# ==========================================================
+def _fit_content(
+    question: str,
+    anchors_text: str,
+    text_width: float,
+    available_height: float,
+) -> tuple[Paragraph, float, Paragraph, float]:
+    if text_width <= 0:
+        raise ValueError("Recall content width must be greater than zero.")
+    if available_height <= 0:
+        raise ValueError("Recall content height must be greater than zero.")
+
+    question_size = QUESTION_FONT_SIZE
+    question_leading = QUESTION_LEADING
+    anchor_size = ANCHOR_FONT_SIZE
+    anchor_leading = ANCHOR_LEADING
+    question_markup = _format_question_markup(question)
+
+    while (
+        question_size >= MIN_QUESTION_FONT_SIZE
+        and anchor_size >= MIN_ANCHOR_FONT_SIZE
+    ):
+        question_paragraph = Paragraph(
+            question_markup,
+            _question_style(question_size, question_leading),
+        )
+        anchor_paragraph = Paragraph(
+            escape(anchors_text),
+            _anchor_style(anchor_size, anchor_leading),
+        )
+
+        _, question_height = question_paragraph.wrap(text_width, available_height)
+        _, anchor_height = anchor_paragraph.wrap(text_width, available_height)
+
+        if question_height + QUESTION_ANCHOR_GAP + anchor_height <= available_height:
+            return (
+                question_paragraph,
+                question_height,
+                anchor_paragraph,
+                anchor_height,
+            )
+
+        question_size -= FONT_REDUCTION_STEP
+        question_leading = max(
+            MIN_QUESTION_LEADING,
+            question_leading - FONT_REDUCTION_STEP,
+        )
+        anchor_size -= FONT_REDUCTION_STEP
+        anchor_leading = max(
+            MIN_ANCHOR_LEADING,
+            anchor_leading - FONT_REDUCTION_STEP,
+        )
+
+    raise ValueError(
+        "Recall question and anchors are too long to fit inside the allocated PDF box."
+    )
+
 
 def draw_recall_questions(
     pdf,
     box: Rectangle,
     questions,
+    anchors=None,
 ) -> None:
-    """
-    Draw exactly two recall questions inside a rounded box.
-    """
+    """Draw one recall question and five horizontal anchors."""
 
     if pdf is None:
-        raise ValueError(
-            "Recall Questions PDF canvas cannot be None."
-        )
-
+        raise ValueError("Recall PDF canvas cannot be None.")
     if box is None:
+        raise ValueError("Recall box cannot be None.")
+
+    question = _extract_question(questions)
+
+    if anchors is None:
         raise ValueError(
-            "Recall Questions box cannot be None."
+            "Five revision anchors are required for the Version 3.1 recall box."
         )
 
-    if not isinstance(
-        questions,
-        (list, tuple),
-    ):
-        raise TypeError(
-            "Recall Questions must be supplied as a list or tuple."
-        )
-
-    if len(questions) != 2:
-        raise ValueError(
-            "Recall Questions must contain exactly two questions."
-        )
-
-    question_1 = str(
-        questions[0]
-    ).strip()
-
-    question_2 = str(
-        questions[1]
-    ).strip()
-
-    if not question_1 or not question_2:
-        raise ValueError(
-            "Recall questions cannot be empty."
-        )
+    cleaned_anchors = _clean_anchors(anchors)
+    anchors_text = " | ".join(cleaned_anchors)
 
     draw_rounded_box(
         canvas=pdf,
@@ -254,35 +249,13 @@ def draw_recall_questions(
         radius=BOX_RADIUS,
     )
 
-    left_x = (
-        box.x
-        + HORIZONTAL_PADDING
-    )
-
-    right_x = (
-        box.right
-        - HORIZONTAL_PADDING
-    )
-
-    top_y = (
-        box.top
-        - VERTICAL_PADDING
-    )
-
-    heading_y = (
-        top_y
-        - HEADING_FONT_SIZE
-    )
+    left_x = box.x + HORIZONTAL_PADDING
+    right_x = box.right - HORIZONTAL_PADDING
+    top_y = box.top - VERTICAL_PADDING
+    heading_y = top_y - HEADING_FONT_SIZE
 
     icon_x = left_x
-
-    icon_y = (
-        heading_y
-        + (
-            HEADING_FONT_SIZE
-            - ICON_SIZE
-        ) / 2
-    )
+    icon_y = heading_y + (HEADING_FONT_SIZE - ICON_SIZE) / 2
 
     icon_drawn = draw_svg_icon(
         canvas=pdf,
@@ -294,139 +267,51 @@ def draw_recall_questions(
     )
 
     heading_x = (
-        icon_x
-        + ICON_SIZE
-        + ICON_TEXT_GAP
+        icon_x + ICON_SIZE + ICON_TEXT_GAP
         if icon_drawn
         else left_x
     )
 
-    question_area_top = (
-        heading_y
-        - HEADING_BOTTOM_GAP
-    )
-
-    text_x = (
-        left_x
-        + LABEL_AREA_WIDTH
-        + LABEL_TEXT_GAP
-    )
-
-    text_width = (
-        right_x
-        - text_x
-    )
-
-    content_bottom = (
-        box.y
-        + VERTICAL_PADDING
-    )
-
-    available_height = (
-        question_area_top
-        - content_bottom
-    )
+    content_top = heading_y - HEADING_BOTTOM_GAP
+    content_bottom = box.y + VERTICAL_PADDING
+    text_width = right_x - left_x
+    available_height = content_top - content_bottom
 
     (
-        paragraph_1,
-        height_1,
-        paragraph_2,
-        height_2,
-    ) = _fit_questions(
-        question_1=question_1,
-        question_2=question_2,
+        question_paragraph,
+        question_height,
+        anchor_paragraph,
+        anchor_height,
+    ) = _fit_content(
+        question=question,
+        anchors_text=anchors_text,
         text_width=text_width,
         available_height=available_height,
     )
 
-    question_1_y = (
-        question_area_top
-        - height_1
-    )
-
-    question_2_top = (
-        question_1_y
-        - QUESTION_GAP
-    )
-
-    question_2_y = (
-        question_2_top
-        - height_2
-    )
+    question_y = content_top - question_height
+    anchor_y = question_y - QUESTION_ANCHOR_GAP - anchor_height
 
     pdf.saveState()
-
     try:
-        pdf.setFillColor(
-            COLOURS.primary
-        )
+        pdf.setFillColor(COLOURS.primary)
+        pdf.setFont(HEADING_FONT_NAME, HEADING_FONT_SIZE)
+        pdf.drawString(heading_x, heading_y, SECTION_TITLE)
 
-        pdf.setFont(
-            HEADING_FONT_NAME,
-            HEADING_FONT_SIZE,
-        )
-
-        pdf.drawString(
-            heading_x,
-            heading_y,
-            SECTION_TITLE,
-        )
-
-        pdf.setFont(
-            LABEL_FONT_NAME,
-            LABEL_FONT_SIZE,
-        )
-
-        pdf.drawString(
-            left_x,
-            question_area_top
-            - LABEL_FONT_SIZE,
-            "Q1.",
-        )
-
-        paragraph_1.drawOn(
-            pdf,
-            text_x,
-            question_1_y,
-        )
-
-        pdf.drawString(
-            left_x,
-            question_2_top
-            - LABEL_FONT_SIZE,
-            "Q2.",
-        )
-
-        paragraph_2.drawOn(
-            pdf,
-            text_x,
-            question_2_y,
-        )
-
+        question_paragraph.drawOn(pdf, left_x, question_y)
+        anchor_paragraph.drawOn(pdf, left_x, anchor_y)
     finally:
         pdf.restoreState()
 
 
-# ==========================================================
-# DEVELOPMENT TEST
-# ==========================================================
-
 if __name__ == "__main__":
     print("=" * 60)
-    print(
-        "UPSC ISSUES BY KUMAR — "
-        "RECALL QUESTIONS COMPONENT"
-    )
+    print("UPSC ISSUES BY KUMAR — RECALL QUESTION COMPONENT V3.1")
     print("=" * 60)
-
-    print(
-        "Recall icon:",
-        "FOUND"
-        if RECALL_ICON.is_file()
-        else "MISSING",
-    )
-
-    print("✓ Exactly two recall questions required")
-    print("✓ Shared automatic font fitting enabled")
-    print("✓ Long-question support enabled")
+    print("Recall icon:", "FOUND" if RECALL_ICON.is_file() else "MISSING")
+    print("✓ Exactly one recall question required")
+    print("✓ Exactly five revision anchors required")
+    print("✓ Topic-before-colon bold formatting enabled")
+    print("✓ Horizontal anchor display enabled")
+    print("✓ Automatic font fitting enabled")
     print("=" * 60)

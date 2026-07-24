@@ -582,10 +582,10 @@ def load_daily_input(
 
         if len(
             recall_questions
-        ) != 2:
+        ) != 1:
             raise DailyInputError(
                 f"Issue {issue_number} must contain "
-                "exactly two Recall Questions."
+                "exactly one Recall Question."
             )
 
     if source_files is None:

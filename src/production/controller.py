@@ -1,13 +1,13 @@
 """
 ============================================================
 TODAY'S UPSC ISSUES
-VERSION 3.0 PRODUCTION CONTROLLER
+VERSION 3.1 PRODUCTION CONTROLLER
 Created by Sudhir
 ============================================================
 
 SIMPLIFIED WORKFLOW
 
-generated_content.json
+DAILY_INPUT.json
         ↓
 Optional issue selection
         ↓
@@ -28,6 +28,7 @@ import json
 import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from src.production.models import SessionStatus
@@ -61,7 +62,7 @@ V21_DAILY_RUNNER = (
 
 class ProductionControllerError(RuntimeError):
     """
-    Raised when Version 3.0 production cannot continue.
+    Raised when Version 3.1 production cannot continue.
     """
 
 
@@ -71,7 +72,7 @@ class ProductionControllerError(RuntimeError):
 
 class ProductionController:
     """
-    Run the simplified Version 3.0 production workflow.
+    Run the simplified Version 3.1 production workflow.
     """
 
     def __init__(
@@ -79,6 +80,20 @@ class ProductionController:
         production_date: str,
     ) -> None:
         self.production_date = production_date
+
+        try:
+            parsed_date = datetime.strptime(
+                production_date,
+                "%Y-%m-%d",
+            )
+        except ValueError as exc:
+            raise ProductionControllerError(
+                "production_date must use YYYY-MM-DD."
+            ) from exc
+
+        schema_date = parsed_date.strftime(
+            "%d-%m-%Y"
+        )
 
         self.paths = ProductionPaths.for_date(
             production_date
@@ -89,15 +104,11 @@ class ProductionController:
         )
 
         self.validator = ProductionValidator(
-            expected_production_date=(
-                production_date
-            )
+            expected_production_date=schema_date
         )
 
         self.adapter = V21Adapter(
-            expected_production_date=(
-                production_date
-            )
+            expected_production_date=schema_date
         )
 
     # ------------------------------------------------------
@@ -128,8 +139,6 @@ class ProductionController:
         Ensure the production session and directories exist.
         """
 
-        self.paths.create_directories()
-
         if not self.manager.exists:
             self.manager.create_session(
                 copy_editorials=False,
@@ -138,6 +147,8 @@ class ProductionController:
             self._success(
                 "Production session created"
             )
+        else:
+            self.paths.create_directories()
 
     # ------------------------------------------------------
     # LOAD CANONICAL DATA
@@ -147,7 +158,7 @@ class ProductionController:
         self,
     ) -> dict:
         """
-        Load the original generated_content.json file.
+        Load the session copy of DAILY_INPUT.json.
         """
 
         canonical_file = (
@@ -156,7 +167,7 @@ class ProductionController:
 
         if not canonical_file.exists():
             raise ProductionControllerError(
-                "Canonical generated_content.json was not found:\n"
+                "DAILY_INPUT.json session copy was not found:\n"
                 f"{canonical_file}"
             )
 
@@ -168,14 +179,14 @@ class ProductionController:
             )
         except json.JSONDecodeError as exc:
             raise ProductionControllerError(
-                "generated_content.json contains invalid JSON "
+                "DAILY_INPUT.json contains invalid JSON "
                 f"at line {exc.lineno}, column {exc.colno}: "
                 f"{exc.msg}"
             ) from exc
 
         if not isinstance(data, dict):
             raise ProductionControllerError(
-                "Canonical content must be a JSON object."
+                "DAILY_INPUT.json must be a JSON object."
             )
 
         return data
@@ -189,36 +200,16 @@ class ProductionController:
         issue_numbers: list[int] | None,
     ) -> Path:
         """
-        Create the canonical file used for the current build.
-
-        When issue_numbers are supplied, only those original
-        issue numbers are retained.
-
-        Selected issues are renumbered sequentially from 1.
-
-        production.issue_count and issue_id values are updated
-        automatically.
-
-        When issue_numbers are omitted, every issue present in
-        generated_content.json is used.
+        Create the Version 3.1 file used for the current build.
         """
 
         self.ensure_session()
+        canonical_data = self._load_canonical_data()
+        all_issues = canonical_data.get("issues")
 
-        canonical_data = (
-            self._load_canonical_data()
-        )
-
-        all_issues = canonical_data.get(
-            "issues"
-        )
-
-        if (
-            not isinstance(all_issues, list)
-            or not all_issues
-        ):
+        if not isinstance(all_issues, list) or not all_issues:
             raise ProductionControllerError(
-                "Canonical content contains no issues."
+                "DAILY_INPUT.json contains no issues."
             )
 
         issue_lookup: dict[int, dict] = {}
@@ -227,25 +218,23 @@ class ProductionController:
             if not isinstance(issue, dict):
                 continue
 
-            issue_number = issue.get(
-                "issue_number"
-            )
+            metadata = issue.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            issue_number = metadata.get("issue_number")
 
             if (
                 isinstance(issue_number, int)
-                and not isinstance(
-                    issue_number,
-                    bool,
-                )
+                and not isinstance(issue_number, bool)
             ):
-                issue_lookup[
-                    issue_number
-                ] = issue
+                issue_lookup[issue_number] = issue
 
         if not issue_lookup:
             raise ProductionControllerError(
-                "Canonical issues do not contain valid "
-                "issue_number values."
+                "Issues do not contain valid "
+                "metadata.issue_number values."
             )
 
         if issue_numbers:
@@ -263,9 +252,7 @@ class ProductionController:
                     )
 
                 if number not in cleaned_numbers:
-                    cleaned_numbers.append(
-                        number
-                    )
+                    cleaned_numbers.append(number)
 
             unavailable_numbers = [
                 number
@@ -276,11 +263,8 @@ class ProductionController:
             if unavailable_numbers:
                 available_text = ", ".join(
                     str(number)
-                    for number in sorted(
-                        issue_lookup
-                    )
+                    for number in sorted(issue_lookup)
                 )
-
                 unavailable_text = ", ".join(
                     str(number)
                     for number in unavailable_numbers
@@ -288,20 +272,15 @@ class ProductionController:
 
                 raise ProductionControllerError(
                     "The following selected issue numbers are "
-                    "not present in generated_content.json: "
+                    "not present in DAILY_INPUT.json: "
                     f"{unavailable_text}\n"
                     f"Available issue numbers: {available_text}"
                 )
-
         else:
-            cleaned_numbers = sorted(
-                issue_lookup
-            )
+            cleaned_numbers = sorted(issue_lookup)
 
         selected_issues = [
-            copy.deepcopy(
-                issue_lookup[number]
-            )
+            copy.deepcopy(issue_lookup[number])
             for number in cleaned_numbers
         ]
 
@@ -310,98 +289,41 @@ class ProductionController:
                 "No issues were selected for production."
             )
 
-        production = canonical_data.get(
-            "production"
-        )
+        production = canonical_data.get("production")
 
         if not isinstance(production, dict):
             raise ProductionControllerError(
-                "Canonical production metadata is missing."
+                "Production metadata is missing."
             )
 
         edition_code = str(
-            production.get(
-                "edition_code",
-                "",
-            )
+            production.get("edition_code", "")
         ).strip()
 
         if not edition_code:
             raise ProductionControllerError(
-                "Canonical edition_code is missing."
+                "production.edition_code is missing."
             )
 
         for new_number, issue in enumerate(
             selected_issues,
             start=1,
         ):
-            issue["issue_number"] = (
-                new_number
-            )
+            metadata = issue.get("metadata")
 
-            old_issue_id = str(
-                issue.get(
-                    "issue_id",
-                    "",
-                )
-            ).strip()
-
-            new_issue_id = re.sub(
-                (
-                    r"^(TUI-[0-9]{6}-)"
-                    r"[0-9]{2}(-)"
-                ),
-                (
-                    rf"\g<1>"
-                    f"{new_number:02d}"
-                    r"\2"
-                ),
-                old_issue_id,
-            )
-
-            if (
-                not new_issue_id
-                or new_issue_id == old_issue_id
-                and not old_issue_id.startswith(
-                    f"{edition_code}-"
-                    f"{new_number:02d}-"
-                )
-            ):
-                title_part = re.sub(
-                    r"[^A-Z0-9]+",
-                    "-",
-                    str(
-                        issue.get(
-                            "title",
-                            "ISSUE",
-                        )
-                    ).upper(),
-                ).strip("-")
-
-                if not title_part:
-                    title_part = "ISSUE"
-
-                new_issue_id = (
-                    f"{edition_code}-"
-                    f"{new_number:02d}-"
-                    f"{title_part}"
+            if not isinstance(metadata, dict):
+                raise ProductionControllerError(
+                    "Selected issue metadata is missing."
                 )
 
-            issue["issue_id"] = (
-                new_issue_id
+            metadata["issue_number"] = new_number
+            metadata["issue_id"] = (
+                f"{edition_code}-{new_number:03d}"
             )
 
-        selected_data = copy.deepcopy(
-            canonical_data
-        )
-
-        selected_data["issues"] = (
-            selected_issues
-        )
-
-        selected_data[
-            "production"
-        ]["issue_count"] = len(
+        selected_data = copy.deepcopy(canonical_data)
+        selected_data["issues"] = selected_issues
+        selected_data["production"]["total_issues"] = len(
             selected_issues
         )
 
@@ -428,15 +350,9 @@ class ProductionController:
         self.manager.mark_stage_completed(
             "issues_selected_for_build",
             metadata={
-                "selected_issue_numbers": (
-                    cleaned_numbers
-                ),
-                "selected_issue_count": len(
-                    selected_issues
-                ),
-                "selected_canonical_file": str(
-                    selected_file
-                ),
+                "selected_issue_numbers": cleaned_numbers,
+                "selected_issue_count": len(selected_issues),
+                "selected_canonical_file": str(selected_file),
             },
         )
 
@@ -468,7 +384,7 @@ class ProductionController:
         self.ensure_session()
 
         self._heading(
-            "VERSION 3.0 — VALIDATE CANONICAL CONTENT"
+            "VERSION 3.1 — VALIDATE CANONICAL CONTENT"
         )
 
         validation_file = (
@@ -581,7 +497,7 @@ class ProductionController:
         """
 
         self._heading(
-            "VERSION 3.0 — CREATE VERSION 2.1 INPUT"
+            "VERSION 3.1 — CREATE VERSION 2.1 INPUT"
         )
 
         adapter_file = (
@@ -626,7 +542,7 @@ class ProductionController:
         """
 
         self._heading(
-            "VERSION 3.0 — RUN VERSION 2.1 PIPELINE"
+            "VERSION 3.1 — RUN VERSION 2.1 PIPELINE"
         )
 
         if not V21_DAILY_RUNNER.exists():
@@ -710,7 +626,7 @@ class ProductionController:
         """
 
         self._heading(
-            "VERSION 3.0 — COMPLETE PRODUCTION BUILD"
+            "VERSION 3.1 — COMPLETE PRODUCTION BUILD"
         )
 
         try:
@@ -740,7 +656,7 @@ class ProductionController:
             print()
             print("=" * 72)
             print(
-                "VERSION 3.0 PRODUCTION FAILED"
+                "VERSION 3.1 PRODUCTION FAILED"
             )
             print("=" * 72)
             print(str(error))
@@ -755,7 +671,7 @@ class ProductionController:
         print("=" * 72)
         print("TODAY'S UPSC ISSUES")
         print(
-            "VERSION 3.0 PRODUCTION "
+            "VERSION 3.1 PRODUCTION "
             "COMPLETED SUCCESSFULLY"
         )
         print("=" * 72)
@@ -789,7 +705,7 @@ class ProductionController:
         """
 
         self._heading(
-            "VERSION 3.0 — PRODUCTION STATUS"
+            "VERSION 3.1 — PRODUCTION STATUS"
         )
 
         canonical_exists = (
@@ -854,11 +770,15 @@ class ProductionController:
 
                 available_numbers = [
                     issue.get(
+                        "metadata",
+                        {},
+                    ).get(
                         "issue_number"
                     )
                     for issue in issues
-                    if isinstance(
-                        issue,
+                    if isinstance(issue, dict)
+                    and isinstance(
+                        issue.get("metadata"),
                         dict,
                     )
                 ]
@@ -920,7 +840,7 @@ class ProductionController:
 
         else:
             print(
-                "Save generated_content.json at "
+                "Run run_daily.py with DAILY_INPUT.json. "
                 "the canonical file location "
                 "before building."
             )

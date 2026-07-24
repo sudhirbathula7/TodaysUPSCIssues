@@ -1,13 +1,13 @@
 """
 ============================================================
 TODAY'S UPSC ISSUES
-VERSION 3.0 → VERSION 2.1 ADAPTER
+VERSION 3.1 → VERSION 2.1 ADAPTER
 Created by Sudhir
 ============================================================
 
 PURPOSE
 
-Converts the Version 3.0 canonical generated_content.json
+Converts the Version 3.1 DAILY_INPUT.json
 contract into the flat selected_issues.json structure consumed
 by the stable Version 2.1 repository generator.
 
@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -246,25 +246,21 @@ def _build_youtube_script(
 ) -> str:
     """
     Build the Version 2.1 YouTube Shorts script.
-
-    The canonical script remains the primary content. The hook
-    and closing question are retained in the same output so no
-    canonical content is lost during translation.
     """
 
     hook = _clean_text(
         youtube.get("hook"),
-        field_name="youtube.hook",
+        field_name="outputs.youtube_short.hook",
     )
 
     script = _clean_text(
-        youtube.get("script"),
-        field_name="youtube.script",
+        youtube.get("short_script"),
+        field_name="outputs.youtube_short.short_script",
     )
 
     closing_question = _clean_text(
         youtube.get("closing_question"),
-        field_name="youtube.closing_question",
+        field_name="outputs.youtube_short.closing_question",
     )
 
     return (
@@ -273,7 +269,6 @@ def _build_youtube_script(
         f"{closing_question}"
     )
 
-
 def _build_telegram_caption(
     telegram: dict[str, Any],
 ) -> str:
@@ -281,13 +276,10 @@ def _build_telegram_caption(
     Build the Version 2.1 Telegram caption.
     """
 
-    recall_prompt = _clean_text(
+    return _clean_text(
         telegram.get("recall_prompt"),
-        field_name="telegram.recall_prompt",
+        field_name="outputs.telegram_card.recall_prompt",
     )
-
-    return recall_prompt
-
 
 def _build_website_heading(
     website: dict[str, Any],
@@ -297,12 +289,13 @@ def _build_website_heading(
     """
 
     return _clean_text(
-        website.get("short_heading"),
-        field_name="website.short_heading",
+        website.get("heading"),
+        field_name="outputs.website_article.heading",
     )
 
 
 # ==========================================================
+# ISSUE TRANSLATION# ==========================================================
 # ISSUE TRANSLATION
 # ==========================================================
 
@@ -310,57 +303,77 @@ def convert_issue_to_v21(
     issue: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Convert one canonical issue into the Version 2.1 flat
+    Convert one Version 3.1 issue into the Version 2.1 flat
     input structure.
     """
 
     if not isinstance(issue, dict):
         raise CanonicalInputError(
-            "Each canonical issue must be an object."
+            "Each issue must be an object."
         )
 
-    content = issue.get("content")
+    metadata = issue.get("metadata")
+    pdf = issue.get("pdf")
     recall = issue.get("recall")
-    youtube = issue.get("youtube")
-    telegram = issue.get("telegram")
-    website = issue.get("website")
+    outputs = issue.get("outputs")
 
-    required_objects = {
-        "content": content,
+    required_root_objects = {
+        "metadata": metadata,
+        "pdf": pdf,
         "recall": recall,
-        "youtube": youtube,
-        "telegram": telegram,
-        "website": website,
+        "outputs": outputs,
     }
 
-    for name, value in required_objects.items():
+    for name, value in required_root_objects.items():
+        if not isinstance(value, dict):
+            raise CanonicalInputError(
+                f"Issue {name} must be an object."
+            )
+
+    telegram = outputs.get("telegram_card")
+    youtube = outputs.get("youtube_short")
+    website = outputs.get("website_article")
+
+    required_output_objects = {
+        "outputs.telegram_card": telegram,
+        "outputs.youtube_short": youtube,
+        "outputs.website_article": website,
+    }
+
+    for name, value in required_output_objects.items():
         if not isinstance(value, dict):
             raise CanonicalInputError(
                 f"Issue {name} must be an object."
             )
 
     syllabus_tags = _clean_string_list(
-        issue.get("syllabus_tags"),
-        field_name="syllabus_tags",
+        metadata.get("syllabus_tags"),
+        field_name="metadata.syllabus_tags",
+        minimum=1,
+    )
+
+    gs_papers = _clean_string_list(
+        metadata.get("gs_papers"),
+        field_name="metadata.gs_papers",
         minimum=1,
     )
 
     quick_facts = _clean_string_list(
-        content.get("quick_facts"),
-        field_name="content.quick_facts",
-        minimum=3,
+        pdf.get("quick_facts"),
+        field_name="pdf.quick_facts",
+        minimum=4,
     )
 
     recall_questions = _clean_string_list(
-        recall.get("questions"),
-        field_name="recall.questions",
+        recall.get("recall_questions"),
+        field_name="recall.recall_questions",
         minimum=2,
     )
 
     anchors = _clean_string_list(
-        recall.get("anchors"),
-        field_name="recall.anchors",
-        minimum=2,
+        recall.get("revision_anchors"),
+        field_name="recall.revision_anchors",
+        minimum=5,
     )
 
     if len(recall_questions) != 2:
@@ -369,73 +382,29 @@ def convert_issue_to_v21(
             "recall questions per issue."
         )
 
-    converted_issue = {
-        "title": _clean_text(
-            issue.get("title"),
-            field_name="title",
-        ),
-        "gs_paper": _clean_text(
-            issue.get("gs_paper"),
-            field_name="gs_paper",
-        ),
-        "category": _build_category(
-            syllabus_tags
-        ),
-        "rating": _format_rating(
-            issue.get("rating")
-        ),
-        "current_context": _clean_text(
-            content.get("current_context"),
-            field_name="content.current_context",
-        ),
-        "why_it_matters_for_upsc": _clean_text(
-            content.get("why_it_matters"),
-            field_name="content.why_it_matters",
-        ),
-        "core_concept": _clean_text(
-            content.get("core_concept"),
-            field_name="content.core_concept",
-        ),
-        "challenges": _clean_text(
-            content.get("challenges"),
-            field_name="content.challenges",
-        ),
-        "way_forward": _clean_text(
-            content.get("way_forward"),
-            field_name="content.way_forward",
-        ),
+    return {
+        "title": _clean_text(metadata.get("title"), field_name="metadata.title"),
+        "gs_paper": ", ".join(gs_papers),
+        "category": _build_category(syllabus_tags),
+        "rating": _format_rating(metadata.get("rating")),
+        "current_context": _clean_text(pdf.get("current_context"), field_name="pdf.current_context"),
+        "why_it_matters_for_upsc": _clean_text(pdf.get("why_it_matters"), field_name="pdf.why_it_matters"),
+        "core_concept": _clean_text(pdf.get("core_concept"), field_name="pdf.core_concept"),
+        "challenges": _clean_text(pdf.get("challenges"), field_name="pdf.challenges"),
+        "way_forward": _clean_text(pdf.get("way_forward"), field_name="pdf.way_forward"),
         "quick_facts": quick_facts,
-        "what_upsc_asks": _clean_text(
-            content.get("what_upsc_asks"),
-            field_name="content.what_upsc_asks",
-        ),
-        "key_takeaway": _clean_text(
-            content.get("key_takeaway"),
-            field_name="content.key_takeaway",
-        ),
+        "what_upsc_asks": _clean_text(pdf.get("what_upsc_asks"), field_name="pdf.what_upsc_asks"),
+        "key_takeaway": _clean_text(pdf.get("key_takeaway"), field_name="pdf.key_takeaway"),
         "recall_questions": recall_questions,
-        "youtube_short_script": (
-            _build_youtube_script(
-                youtube
-            )
-        ),
+        "youtube_short_script": _build_youtube_script(youtube),
         "anchors": anchors,
-        "telegram_caption": (
-            _build_telegram_caption(
-                telegram
-            )
-        ),
-        "website_heading": (
-            _build_website_heading(
-                website
-            )
-        ),
+        "telegram_caption": _build_telegram_caption(telegram),
+        "website_heading": _build_website_heading(website),
     }
-
-    return converted_issue
 
 
 # ==========================================================
+# DATASET TRANSLATION# ==========================================================
 # DATASET TRANSLATION
 # ==========================================================
 
@@ -485,13 +454,14 @@ def convert_canonical_data_to_v21(
     )
 
     try:
-        date.fromisoformat(
-            publication_date
+        datetime.strptime(
+            publication_date,
+            "%d-%m-%Y",
         )
     except ValueError as exc:
         raise CanonicalInputError(
             "production.production_date must "
-            "use YYYY-MM-DD."
+            "use DD-MM-YYYY."
         ) from exc
 
     converted_issues = [
@@ -758,7 +728,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "canonical_file",
         type=Path,
-        help="Path to generated_content.json",
+        help="Path to DAILY_INPUT.json",
     )
 
     parser.add_argument(
@@ -766,7 +736,7 @@ if __name__ == "__main__":
         dest="production_date",
         help=(
             "Expected production date in "
-            "YYYY-MM-DD format."
+            "DD-MM-YYYY format."
         ),
     )
 

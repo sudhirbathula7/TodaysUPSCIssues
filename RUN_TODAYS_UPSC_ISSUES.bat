@@ -27,11 +27,11 @@ if not exist "run_daily.py" (
     exit /b 1
 )
 
-if not exist "input\generated_content.json" (
+if not exist "input\DAILY_INPUT.json" (
     echo ERROR: Daily input file was not found.
     echo.
     echo Copy today's final ChatGPT JSON into:
-    echo %CD%\input\generated_content.json
+    echo %CD%\input\DAILY_INPUT.json
     echo.
     pause
     exit /b 1

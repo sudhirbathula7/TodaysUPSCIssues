@@ -59,7 +59,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--build",
         action="store_true",
         help=(
-            "Validate generated_content.json and "
+            "Validate daily production data and "
             "run the complete production pipeline."
         ),
     )
@@ -68,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--validate",
         action="store_true",
         help=(
-            "Validate generated_content.json only."
+            "Validate daily production data only."
         ),
     )
 

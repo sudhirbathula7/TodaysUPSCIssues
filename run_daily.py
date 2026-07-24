@@ -1,4 +1,4 @@
-"""
+﻿"""
 ============================================================
 TODAY'S UPSC ISSUES
 VERSION 3.1 DAILY LAUNCHER
@@ -13,7 +13,7 @@ DAILY WORKFLOW
 
 1. Save the final ChatGPT JSON at:
 
-       input/generated_content.json
+       input/DAILY_INPUT.json
 
 2. Run:
 
@@ -78,9 +78,9 @@ from src.production.session_manager import (  # noqa: E402
 
 INPUT_ROOT = PROJECT_ROOT / "input"
 
-GENERATED_CONTENT_FILE = (
+DAILY_INPUT_FILE = (
     INPUT_ROOT
-    / "generated_content.json"
+    / "DAILY_INPUT.json"
 )
 
 
@@ -112,7 +112,7 @@ def print_success(
 ) -> None:
     """Print a success message."""
 
-    print(f"✓ {message}")
+    print(f"âœ“ {message}")
 
 
 # ==========================================================
@@ -121,47 +121,47 @@ def print_success(
 
 def load_daily_input() -> dict[str, Any]:
     """
-    Load input/generated_content.json.
+    Load input/DAILY_INPUT.json.
 
     UTF-8 with or without a byte-order mark is accepted.
     """
 
-    if not GENERATED_CONTENT_FILE.exists():
+    if not DAILY_INPUT_FILE.exists():
         raise DailyLauncherError(
             "Daily input file was not found:\n"
-            f"{GENERATED_CONTENT_FILE}\n\n"
+            f"{DAILY_INPUT_FILE}\n\n"
             "Copy today's final ChatGPT JSON into this file "
             "before running production."
         )
 
-    if not GENERATED_CONTENT_FILE.is_file():
+    if not DAILY_INPUT_FILE.is_file():
         raise DailyLauncherError(
             "The daily input path is not a file:\n"
-            f"{GENERATED_CONTENT_FILE}"
+            f"{DAILY_INPUT_FILE}"
         )
 
     try:
-        content = GENERATED_CONTENT_FILE.read_text(
+        content = DAILY_INPUT_FILE.read_text(
             encoding="utf-8-sig",
         )
     except OSError as error:
         raise DailyLauncherError(
             "The daily input file could not be read:\n"
-            f"{GENERATED_CONTENT_FILE}\n"
+            f"{DAILY_INPUT_FILE}\n"
             f"{error}"
         ) from error
 
     if not content.strip():
         raise DailyLauncherError(
             "The daily input file is empty:\n"
-            f"{GENERATED_CONTENT_FILE}"
+            f"{DAILY_INPUT_FILE}"
         )
 
     try:
         data = json.loads(content)
     except json.JSONDecodeError as error:
         raise DailyLauncherError(
-            "input/generated_content.json contains invalid JSON.\n"
+            "input/DAILY_INPUT.json contains invalid JSON.\n"
             f"Line   : {error.lineno}\n"
             f"Column : {error.colno}\n"
             f"Reason : {error.msg}"
@@ -404,12 +404,12 @@ def main() -> int:
     """Run Version 3.1 daily production."""
 
     print_heading(
-        "VERSION 3.1 — ONE-FILE DAILY PRODUCTION"
+        "VERSION 3.1 â€” ONE-FILE DAILY PRODUCTION"
     )
 
     print(
         f"Daily input:\n"
-        f"{GENERATED_CONTENT_FILE}"
+        f"{DAILY_INPUT_FILE}"
     )
     print("-" * 72)
 

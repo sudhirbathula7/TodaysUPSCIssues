@@ -100,9 +100,9 @@ HEADER_BADGE_RATIO = 0.20
 # RIGHT COLUMN HEIGHT PROPORTIONS
 # ===========================================================
 
-RECALL_RATIO = 0.25
-QUICK_FACTS_RATIO = 0.45
-TAKEAWAY_RATIO = 0.30
+RECALL_RATIO = 0.28
+QUICK_FACTS_RATIO = 0.47
+TAKEAWAY_RATIO = 0.25
 
 
 # ===========================================================

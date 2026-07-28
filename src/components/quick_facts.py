@@ -28,8 +28,7 @@ from src.components.helpers import (
     draw_svg_icon,
 )
 from src.layout import BOX_RADIUS, Rectangle
-from src.styles import BOLD_FONT, COLOURS, FONTS
-
+from src.styles import BOLD_FONT, COLOURS
 
 # ==========================================================
 # TEXT
@@ -61,15 +60,15 @@ ICON_TEXT_GAP = 5.0
 # ==========================================================
 
 HEADING_FONT_NAME = BOLD_FONT
-HEADING_FONT_SIZE = 9.2
+HEADING_FONT_SIZE = 8.7
 
-FACT_FONT_NAME = FONTS.quick_fact.name
-FACT_FONT_SIZE = 8.3
-FACT_LEADING = 9.8
+FACT_FONT_NAME = "Helvetica"
 
-MIN_FACT_FONT_SIZE = 7.0
-MIN_FACT_LEADING = 8.2
+FACT_FONT_SIZE = 7.5
+FACT_LEADING = 9.0
 
+MIN_FACT_FONT_SIZE = 6.4
+MIN_FACT_LEADING = 7.6
 FONT_REDUCTION_STEP = 0.2
 
 

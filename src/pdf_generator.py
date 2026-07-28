@@ -670,7 +670,7 @@ def build_content_sections(
             ),
         ),
         ContentSection(
-            heading="Why It Matters for UPSC",
+            heading="Why It Matters",
             text=_clean_text(
                 issue["why_it_matters_for_upsc"]
             ),
@@ -795,6 +795,37 @@ def render_page(
         page_layout.issue1,
         page_layout.issue2,
     )
+
+    # ---------------------------------------------------------
+    # DIVIDER BETWEEN ISSUE 1 AND ISSUE 2
+    # ---------------------------------------------------------
+
+    if len(issues_on_page) == 2:
+        divider_y = (
+            page_layout.issue2.area.top
+            + (
+                page_layout.issue1.area.bottom
+                - page_layout.issue2.area.top
+            ) / 2
+        )
+
+        pdf.saveState()
+        try:
+            pdf.setStrokeColorRGB(
+                0.75,
+                0.75,
+                0.75,
+            )
+            pdf.setLineWidth(0.6)
+
+            pdf.line(
+                page_layout.issue1.area.left,
+                divider_y,
+                page_layout.issue1.area.right,
+                divider_y,
+            )
+        finally:
+            pdf.restoreState()
 
     for local_index, issue in enumerate(
         issues_on_page

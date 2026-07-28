@@ -35,7 +35,7 @@ REQUIRED_PRODUCTION_FIELDS = {"production_date", "edition_code", "total_issues"}
 REQUIRED_ISSUE_FIELDS = {"metadata", "description", "pdf", "recall", "outputs"}
 REQUIRED_METADATA_FIELDS = {
     "issue_number", "issue_id", "title", "slug", "gs_papers",
-    "syllabus_tags", "rating", "source_ids",
+    "syllabus_topic", "rating", "source_ids",
 }
 REQUIRED_PDF_FIELDS = {
     "current_context", "why_it_matters", "core_concept", "challenges",
@@ -336,7 +336,7 @@ class ProductionValidator:
         for item in gs_papers:
             if item not in VALID_GS_PAPERS:
                 result.add_error("INVALID_GS_PAPER", f"{path}.gs_papers", f"Unsupported GS paper: {item!r}.")
-        self._string_list(metadata.get("syllabus_tags"), f"{path}.syllabus_tags", result)
+        self._string(metadata.get("syllabus_topic"), f"{path}.syllabus_topic", result)
         rating = metadata.get("rating")
         if not isinstance(rating, (int, float)) or isinstance(rating, bool) or not MIN_RATING <= float(rating) <= MAX_RATING:
             result.add_error("INVALID_RATING", f"{path}.rating", f"rating must be between {MIN_RATING} and {MAX_RATING}.")

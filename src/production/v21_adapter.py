@@ -223,24 +223,6 @@ def _format_rating(value: Any) -> str:
     return f"{rating_text}/5"
 
 
-def _build_category(
-    syllabus_tags: list[str],
-) -> str:
-    """
-    Build the optional Version 2.1 category value.
-
-    Version 2.1 accepts a flat category string. The canonical
-    schema stores structured syllabus tags.
-
-    The first three unique tags are joined without changing
-    their wording.
-    """
-
-    selected_tags = syllabus_tags[:3]
-
-    return " | ".join(selected_tags)
-
-
 def _build_youtube_script(
     youtube: dict[str, Any],
 ) -> str:
@@ -346,10 +328,9 @@ def convert_issue_to_v21(
                 f"Issue {name} must be an object."
             )
 
-    syllabus_tags = _clean_string_list(
-        metadata.get("syllabus_tags"),
-        field_name="metadata.syllabus_tags",
-        minimum=1,
+    syllabus_topic = _clean_text(
+     metadata.get("syllabus_topic"),
+     field_name="metadata.syllabus_topic",
     )
 
     gs_papers = _clean_string_list(
@@ -384,7 +365,7 @@ def convert_issue_to_v21(
     return {
         "title": _clean_text(metadata.get("title"), field_name="metadata.title"),
         "gs_paper": ", ".join(gs_papers),
-        "category": _build_category(syllabus_tags),
+        "category": syllabus_topic,
         "rating": _format_rating(metadata.get("rating")),
         "current_context": _clean_text(pdf.get("current_context"), field_name="pdf.current_context"),
         "why_it_matters_for_upsc": _clean_text(pdf.get("why_it_matters"), field_name="pdf.why_it_matters"),

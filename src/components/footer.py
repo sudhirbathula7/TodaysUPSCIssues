@@ -26,7 +26,7 @@ FOOTER_BRAND = "UPSC Issues by Kumar"
 
 WEBSITE_TEXT = "Website"
 YOUTUBE_TEXT = "YouTube"
-TELEGRAM_TEXT = "Telegram"
+TELEGRAM_TEXT = "@upscissuesbykumar"
 
 
 # ==========================================================

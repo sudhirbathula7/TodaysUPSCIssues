@@ -9,7 +9,7 @@ Created by Sudhir
 Draws the five locked learning sections:
 
 1. Current Context
-2. Why It Matters for UPSC
+2. Why It Matters
 3. Core Concept
 4. Challenges
 5. Way Forward
@@ -48,7 +48,7 @@ from src.styles import BOLD_FONT, COLOURS, FONTS
 
 LOCKED_HEADINGS = (
     "Current Context",
-    "Why It Matters for UPSC",
+    "Why It Matters",
     "Core Concept",
     "Challenges",
     "Way Forward",
@@ -75,7 +75,7 @@ SECTION_ICONS = {
         SECTION_ICON_DIR
         / "happening.svg"
     ),
-    "Why It Matters for UPSC": (
+    "Why It Matters": (
         SECTION_ICON_DIR
         / "why_matters.svg"
     ),
@@ -703,30 +703,7 @@ def draw_content_sections(
             # ------------------------------------------
 
             if index < len(paragraph_data) - 1:
-                divider_y = (
-                    cursor_y
-                    - DIVIDER_GAP_ABOVE
-                )
-
-                draw_horizontal_line(
-                    canvas=pdf,
-                    x1=(
-                        box.x
-                        + DIVIDER_HORIZONTAL_INSET
-                    ),
-                    y=divider_y,
-                    x2=(
-                        box.right
-                        - DIVIDER_HORIZONTAL_INSET
-                    ),
-                    thickness=DIVIDER_LINE_WIDTH,
-                )
-
-                cursor_y = (
-                    divider_y
-                    - DIVIDER_GAP_BELOW
-                    - SECTION_GAP
-                )
+                cursor_y -= SECTION_GAP
 
     finally:
         pdf.restoreState()

@@ -111,21 +111,20 @@ class ContentSection:
 # ==========================================================
 
 HEADING_FONT_NAME = BOLD_FONT
-HEADING_FONT_SIZE = 9.8
-HEADING_LEADING = 11.2
+HEADING_FONT_SIZE = 10
+HEADING_LEADING = 11.0
 
 BODY_FONT_NAME = FONTS.body.name
-BODY_FONT_SIZE = 9.5
-BODY_LEADING = 11.5
+BODY_FONT_SIZE = 10.8
+BODY_LEADING = 12.2
 
-MIN_HEADING_FONT_SIZE = 8.2
-MIN_HEADING_LEADING = 9.6
+MIN_HEADING_FONT_SIZE = 8.0
+MIN_HEADING_LEADING = 9.4
 
-MIN_BODY_FONT_SIZE = 8.0
-MIN_BODY_LEADING = 9.8
+MIN_BODY_FONT_SIZE = 7.6
+MIN_BODY_LEADING = 9.2
 
 FONT_REDUCTION_STEP = 0.2
-
 
 # ==========================================================
 # ICON SETTINGS
@@ -140,17 +139,16 @@ ICON_TEXT_GAP = 5.0
 # ==========================================================
 
 HORIZONTAL_PADDING = 7.0
-VERTICAL_PADDING = 6.0
+VERTICAL_PADDING = 4.0
 
-HEADING_TEXT_GAP = 3.0
+HEADING_TEXT_GAP = 2.5
 
 DIVIDER_GAP_ABOVE = 2.0
 DIVIDER_GAP_BELOW = 2.0
-SECTION_GAP = 7.0
+SECTION_GAP = 5.0
 
 DIVIDER_LINE_WIDTH = 0.30
 DIVIDER_HORIZONTAL_INSET = 0.0
-
 
 # ==========================================================
 # PARAGRAPH STYLES
@@ -403,7 +401,7 @@ def _build_paragraphs(
 def _calculate_total_height(
     paragraph_data,
 ) -> float:
-    """Calculate the complete required vertical height."""
+    """Calculate the actual vertical height used while drawing."""
 
     text_height = sum(
         heading_height + body_height
@@ -421,19 +419,15 @@ def _calculate_total_height(
         * HEADING_TEXT_GAP
     )
 
-    divider_spacing = (
+    section_spacing = (
         (len(paragraph_data) - 1)
-        * (
-            DIVIDER_GAP_ABOVE
-            + DIVIDER_GAP_BELOW
-            + SECTION_GAP
-        )
+        * SECTION_GAP
     )
 
     return (
         text_height
         + heading_body_gaps
-        + divider_spacing
+        + section_spacing
     )
 
 

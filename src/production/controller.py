@@ -551,12 +551,23 @@ class ProductionController:
                 f"{V21_DAILY_RUNNER}"
             )
 
+        selected_canonical_file = (
+            self.paths.canonical_dir
+         / "selected_generated_content.json"
+        )
+
+        if not selected_canonical_file.exists():
+             raise ProductionControllerError(
+         "Selected canonical production file was not found:\n"
+         f"{selected_canonical_file}"
+        )
+
         command = [
             sys.executable,
-            str(V21_DAILY_RUNNER),
-            self.production_date,
+         str(V21_DAILY_RUNNER),
+            "--input",
+         str(selected_canonical_file),
         ]
-
         if overwrite:
             command.append(
                 "--overwrite"

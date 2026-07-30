@@ -60,16 +60,16 @@ ICON_TEXT_GAP = 5.0
 # ==========================================================
 
 HEADING_FONT_NAME = BOLD_FONT
-HEADING_FONT_SIZE = 8.7
+HEADING_FONT_SIZE = 9
 
 FACT_FONT_NAME = "Helvetica"
 
-FACT_FONT_SIZE = 7.8
-FACT_LEADING = 9.0
+FACT_FONT_SIZE = 9.3
+FACT_LEADING = 9.3
 
 MIN_FACT_FONT_SIZE = 6.4
 MIN_FACT_LEADING = 7.6
-FONT_REDUCTION_STEP = 0.2
+FONT_REDUCTION_STEP = 0.3
 
 
 # ==========================================================
@@ -77,10 +77,10 @@ FONT_REDUCTION_STEP = 0.2
 # ==========================================================
 
 HORIZONTAL_PADDING = 9.0
-VERTICAL_PADDING = 6.5
+VERTICAL_PADDING = 7
 
 HEADING_BOTTOM_GAP = 4.0
-FACT_GAP = 2.5
+FACT_GAP = 3
 
 BULLET_RADIUS = 1.4
 BULLET_TEXT_GAP = 6.0

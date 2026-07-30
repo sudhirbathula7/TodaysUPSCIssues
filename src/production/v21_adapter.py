@@ -328,9 +328,10 @@ def convert_issue_to_v21(
                 f"Issue {name} must be an object."
             )
 
-    syllabus_topic = _clean_text(
-     metadata.get("syllabus_topic"),
-     field_name="metadata.syllabus_topic",
+    syllabus_tags = _clean_string_list(
+     metadata.get("syllabus_tags"),
+     field_name="metadata.syllabus_tags",
+     minimum=1,
     )
 
     gs_papers = _clean_string_list(
@@ -365,7 +366,7 @@ def convert_issue_to_v21(
     return {
         "title": _clean_text(metadata.get("title"), field_name="metadata.title"),
         "gs_paper": ", ".join(gs_papers),
-        "category": syllabus_topic,
+        "category": ", ".join(syllabus_tags),
         "rating": _format_rating(metadata.get("rating")),
         "current_context": _clean_text(pdf.get("current_context"), field_name="pdf.current_context"),
         "why_it_matters_for_upsc": _clean_text(pdf.get("why_it_matters"), field_name="pdf.why_it_matters"),
@@ -436,12 +437,12 @@ def convert_canonical_data_to_v21(
     try:
         datetime.strptime(
             publication_date,
-            "%d-%m-%Y",
+            "%Y-%m-%d",
         )
     except ValueError as exc:
         raise CanonicalInputError(
             "production.production_date must "
-            "use DD-MM-YYYY."
+            "use YYYY-MM-DD."
         ) from exc
 
     converted_issues = [
@@ -716,7 +717,7 @@ if __name__ == "__main__":
         dest="production_date",
         help=(
             "Expected production date in "
-            "DD-MM-YYYY format."
+            "YYYY-MM-DD format."
         ),
     )
 

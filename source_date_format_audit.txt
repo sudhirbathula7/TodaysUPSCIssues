@@ -1,0 +1,38 @@
+project/prompt/Master_Prompt_v5.0.md:201:    "production_date": "DD-MM-YYYY",
+project/prompt/Master_Prompt_v5.0.md:213:DD-MM-YYYY
+run_daily.py:188:    DAILY_INPUT.json uses DD-MM-YYYY.
+run_daily.py:211:            "%d-%m-%Y",
+run_daily.py:215:            "production.production_date must use DD-MM-YYYY format.\n"
+src/distribution/postcard_generator.py:70:    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d-%m-%y"):
+src/distribution/postcard_generator.py:76:        "production.production_date must use YYYY-MM-DD, DD-MM-YYYY, or DD-MM-YY. "
+src/distribution/postcard_generator.py:384:        date_slug = data.production_date.strftime("%d-%m-%y")
+src/distribution/telegram/readme.md:16:    output/distribution/DD-MM-YY/telegram_caption.txt
+src/distribution/telegram/readme.md:48:    for date_format in ("%Y-%m-%d", "%d-%m-%Y", "%d-%m-%y"):
+src/distribution/telegram/readme.md:56:        "DD-MM-YYYY, or DD-MM-YY. "
+src/distribution/telegram/readme.md:317:        date_slug = production_date.strftime("%d-%m-%y")
+src/distribution/youtube/metadata_generator.py:27:    output/distribution/DD-MM-YY/youtube_metadata.txt
+src/distribution/youtube/metadata_generator.py:178:        "%d-%m-%Y",
+src/distribution/youtube/metadata_generator.py:179:        "%d-%m-%y",
+src/distribution/youtube/metadata_generator.py:610:            / production_date.strftime("%d-%m-%y")
+src/distribution/youtube/shorts_script_generator.py:25:    output/distribution/DD-MM-YY/youtube_shorts_scripts.txt
+src/distribution/youtube/shorts_script_generator.py:91:        "%d-%m-%Y",
+src/distribution/youtube/shorts_script_generator.py:92:        "%d-%m-%y",
+src/distribution/youtube/shorts_script_generator.py:288:        date_slug = production_date.strftime("%d-%m-%y")
+src/intelligence/recall_scheduler.py:182:        "%d-%m-%y",
+src/intelligence/recall_scheduler.py:184:        "%d-%m-%Y",
+src/intelligence/recall_scheduler.py:212:    return value.strftime("%d-%m-%y")
+src/intelligence/repository_search.py:191:        "%d-%m-%y",
+src/intelligence/repository_search.py:193:        "%d-%m-%Y",
+src/intelligence/repository_search.py:221:    return value.strftime("%d-%m-%y")
+src/intelligence/usage_tracker.py:194:        "%d-%m-%y",
+src/intelligence/usage_tracker.py:196:        "%d-%m-%Y",
+src/intelligence/usage_tracker.py:218:    """Return DD-MM-YY."""
+src/intelligence/usage_tracker.py:220:    return value.strftime("%d-%m-%y")
+src/production/controller.py:95:            "%d-%m-%Y"
+src/production/paths.py:161:        return self.production_date.strftime("%d-%m-%y")
+src/production/production_validator.py:146:            for date_format in ("%Y-%m-%d", "%d-%m-%Y"):
+src/production/production_validator.py:441:    parser.add_argument("--date", dest="production_date", help="Expected date in YYYY-MM-DD or DD-MM-YYYY format.")
+src/production/production_validator.py:456:            parsed_date = datetime.strptime(report_date, "%d-%m-%Y").date()
+src/production/v21_adapter.py:720:            "DD-MM-YYYY format."
+src/publishing/published_collector.py:15:output/daily/DD-MM-YY/
+src/publishing/published_collector.py:19:Published/DD-MM-YY/

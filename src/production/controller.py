@@ -92,7 +92,7 @@ class ProductionController:
             ) from exc
 
         schema_date = parsed_date.strftime(
-            "%d-%m-%Y"
+            "%Y-%m-%d"
         )
 
         self.paths = ProductionPaths.for_date(

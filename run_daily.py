@@ -185,8 +185,10 @@ def extract_production_date(
     """
     Extract production.production_date.
 
-    DAILY_INPUT.json uses DD-MM-YYYY.
-    The internal production controller uses YYYY-MM-DD.
+    The canonical DAILY_INPUT.json format is YYYY-MM-DD.
+
+    Example:
+    2026-07-29
     """
 
     production = data.get("production")
@@ -208,11 +210,11 @@ def extract_production_date(
     try:
         parsed_date = datetime.strptime(
             production_date,
-            "%d-%m-%Y",
+            "%Y-%m-%d",
         ).date()
     except ValueError as error:
         raise DailyLauncherError(
-            "production.production_date must use DD-MM-YYYY format.\n"
+            "production.production_date must use YYYY-MM-DD format.\n"
             f"Received: {production_date!r}"
         ) from error
 
@@ -265,28 +267,20 @@ def validate_basic_input(
             f"Actual   : {len(issues)}"
         )
 
-    expected_schema_date = (
-        production_date[8:10]
-        + "-"
-        + production_date[5:7]
-        + "-"
-        + production_date[0:4]
-    )
-
     schema_date = str(
-        production.get(
-            "production_date",
-            "",
-        )
-    ).strip()
+     production.get(
+        "production_date",
+        "",
+     )
+     ).strip()
 
-    if schema_date != expected_schema_date:
-        raise DailyLauncherError(
-            "The production date inside DAILY_INPUT.json does "
-            "not match the requested production date.\n"
-            f"Expected : {expected_schema_date}\n"
-            f"Received : {schema_date or 'missing'}"
-        )
+    if schema_date != production_date:
+     raise DailyLauncherError(
+        "The production date inside DAILY_INPUT.json does "
+        "not match the requested production date.\n"
+        f"Expected : {production_date}\n"
+        f"Received : {schema_date or 'missing'}"
+    )
 
     expected_edition_code = (
         "TUI-"

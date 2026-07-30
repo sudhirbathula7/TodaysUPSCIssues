@@ -19,15 +19,15 @@ PRODUCTION STAGES
 
 DEFAULT INPUT
 
-Daily_Work/input/selected_issues.json
+input/DAILY_INPUT.json
 
 NORMAL COMMAND
 
-python src/daily_runner.py 2026-07-20
+python src/daily_runner.py
 
 REBUILD AND OPEN PDF
 
-python src/daily_runner.py 2026-07-20 --overwrite --open-pdf
+python src/daily_runner.py --overwrite --open-pdf
 ============================================================
 """
 
@@ -76,6 +76,10 @@ from src.repository_generator import (  # noqa: E402
     RepositoryResult,
     generate_repository_package,
 )
+from src.production.v21_adapter import (  # noqa: E402
+    V21Adapter,
+    V21AdapterError,
+)
 
 
 # ============================================================
@@ -84,6 +88,12 @@ from src.repository_generator import (  # noqa: E402
 
 DAILY_WORK_ROOT = PROJECT_ROOT / "Daily_Work"
 INPUT_ROOT = DAILY_WORK_ROOT / "input"
+
+CANONICAL_INPUT_FILE = (
+    PROJECT_ROOT
+    / "input"
+    / "DAILY_INPUT.json"
+)
 
 DEFAULT_SELECTED_ISSUES_FILE = (
     INPUT_ROOT
@@ -801,55 +811,129 @@ def generate_daily_intelligence(
 
 
 # ============================================================
+# CANONICAL INPUT PREPARATION
+# ============================================================
+
+def prepare_v21_input(
+    canonical_file: str | Path | None = None,
+    *,
+    overwrite: bool = False,
+) -> Path:
+    """
+    Validate DAILY_INPUT.json and convert it into the stable
+    Version 2.1 selected_issues.json structure.
+
+    DAILY_INPUT.json remains the single source of truth.
+    """
+
+    if canonical_file is None:
+        resolved_canonical_file = CANONICAL_INPUT_FILE.resolve()
+    else:
+        resolved_canonical_file = Path(
+            canonical_file
+        ).expanduser()
+
+        if not resolved_canonical_file.is_absolute():
+            resolved_canonical_file = (
+                PROJECT_ROOT
+                / resolved_canonical_file
+            )
+
+        resolved_canonical_file = (
+            resolved_canonical_file.resolve()
+        )
+
+    if not resolved_canonical_file.exists():
+        raise DailyInputError(
+            "Canonical DAILY_INPUT.json was not found:\n"
+            f"{resolved_canonical_file}"
+        )
+
+    if not resolved_canonical_file.is_file():
+        raise DailyInputError(
+            "Canonical input path is not a file:\n"
+            f"{resolved_canonical_file}"
+        )
+
+    print("=" * 68)
+    print("CANONICAL INPUT PREPARATION")
+    print("=" * 68)
+    print(
+        f"Canonical input : "
+        f"{resolved_canonical_file}"
+    )
+
+    adapter = V21Adapter()
+
+    adapter_result = adapter.convert_file(
+        canonical_file=resolved_canonical_file,
+        output_file=DEFAULT_SELECTED_ISSUES_FILE,
+        overwrite=overwrite,
+        create_backup=True,
+    )
+
+    print(
+        f"Production date : "
+        f"{adapter_result.production_date}"
+    )
+
+    print(
+        f"Issues converted: "
+        f"{adapter_result.issue_count}"
+    )
+
+    print(
+        f"Version 2.1 input: "
+        f"{adapter_result.output_file}"
+    )
+
+    if adapter_result.backup_file is not None:
+        print(
+            f"Backup created  : "
+            f"{adapter_result.backup_file}"
+        )
+
+    print("✓ DAILY_INPUT.json validated and converted")
+    print("-" * 68)
+
+    return adapter_result.output_file
+
+
+# ============================================================
 # COMPLETE DAILY WORKFLOW
 # ============================================================
 
 def run_daily_production(
-    publication_date: (
-        str
-        | date
-        | datetime
-        | None
-    ) = None,
-    input_file: str | Path | None = None,
+    canonical_file: str | Path | None = None,
     overwrite: bool = False,
     open_pdf: bool = False,
 ) -> DailyRunResult:
-    """Run the complete Version 2.1 workflow."""
+    """
+    Run the complete production workflow using DAILY_INPUT.json
+    as the single source of truth.
+    """
 
-    daily_input = load_daily_input(
-        input_file
+    selected_issues_file = prepare_v21_input(
+        canonical_file=canonical_file,
+        overwrite=overwrite,
     )
 
-    if isinstance(
-        publication_date,
-        datetime,
-    ):
-        command_date = (
-            publication_date
-            .date()
-            .isoformat()
+    daily_input = load_daily_input(
+        selected_issues_file
+    )
+
+    input_publication_date = daily_input.get(
+        "publication_date"
+    )
+
+    if not input_publication_date:
+        raise DailyInputError(
+            "The converted Version 2.1 input does not contain "
+            "a publication date."
         )
 
-    elif isinstance(
-        publication_date,
-        date,
-    ):
-        command_date = (
-            publication_date
-            .isoformat()
-        )
-
-    else:
-        command_date = publication_date
-
-    parsed_date = resolve_publication_date(
-        command_line_date=command_date,
-        input_date=(
-            daily_input[
-                "publication_date"
-            ]
-        ),
+    parsed_date = _parse_date(
+        input_publication_date
     )
 
     display_date = _display_date(
@@ -1058,23 +1142,13 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "publication_date",
-        nargs="?",
-        help=(
-            "Publication date. Examples: "
-            "2026-07-20 or 20-07-26."
-        ),
-    )
-
-    parser.add_argument(
         "--input",
         "-i",
-        dest="input_file",
+        dest="canonical_file",
         default=None,
         help=(
-            "Selected issue JSON file. "
-            "Default: "
-            "Daily_Work/input/selected_issues.json"
+            "Canonical DAILY_INPUT.json file. "
+            "Default: input/DAILY_INPUT.json"
         ),
     )
 
@@ -1112,11 +1186,8 @@ def main() -> None:
 
     try:
         result = run_daily_production(
-            publication_date=(
-                arguments.publication_date
-            ),
-            input_file=(
-                arguments.input_file
+            canonical_file=(
+                arguments.canonical_file
             ),
             overwrite=(
                 arguments.overwrite
@@ -1130,6 +1201,7 @@ def main() -> None:
 
     except (
         DailyRunnerError,
+        V21AdapterError,
         RepositoryError,
         KnowledgeEngineError,
         OutputGeneratorError,

@@ -35,7 +35,7 @@ REQUIRED_PRODUCTION_FIELDS = {"production_date", "edition_code", "total_issues"}
 REQUIRED_ISSUE_FIELDS = {"metadata", "description", "pdf", "recall", "outputs"}
 REQUIRED_METADATA_FIELDS = {
     "issue_number", "issue_id", "title", "slug", "gs_papers",
-    "syllabus_topic", "rating", "source_ids",
+    "syllabus_tags", "rating", "source_ids",
 }
 REQUIRED_PDF_FIELDS = {
     "current_context", "why_it_matters", "core_concept", "challenges",
@@ -47,7 +47,6 @@ REQUIRED_TELEGRAM_FIELDS = {"card_title", "card_points", "recall_prompt"}
 REQUIRED_YOUTUBE_FIELDS = {"hook", "short_script", "closing_question"}
 REQUIRED_WEBSITE_FIELDS = {"heading", "summary"}
 
-EDITION_CODE_PATTERN = re.compile(r"^TUI-[0-9]{6}$")
 ISSUE_ID_PATTERN = re.compile(r"^TUI-[0-9]{6}-[0-9]{3}$")
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -140,9 +139,19 @@ class ValidationResult:
 class ProductionValidator:
     def __init__(self, *, expected_production_date: date | str | None = None) -> None:
         if isinstance(expected_production_date, date):
-            self.expected_production_date = expected_production_date.strftime("%d-%m-%Y")
+            self.expected_production_date = expected_production_date.isoformat()
+        elif isinstance(expected_production_date, str):
+            clean = expected_production_date.strip()
+            parsed = None
+            for date_format in ("%Y-%m-%d", "%d-%m-%Y"):
+                try:
+                    parsed = datetime.strptime(clean, date_format).date()
+                    break
+                except ValueError:
+                    continue
+            self.expected_production_date = parsed.isoformat() if parsed else clean
         else:
-            self.expected_production_date = expected_production_date
+            self.expected_production_date = None
 
     def validate_file(self, path: Path) -> ValidationResult:
         path = Path(path)
@@ -254,21 +263,17 @@ class ProductionValidator:
         production_date = production.get("production_date")
         parsed_date: date | None = None
         if not self._is_string(production_date):
-            result.add_error("INVALID_PRODUCTION_DATE", f"{path}.production_date", "Production date must use DD-MM-YYYY.")
+            result.add_error("INVALID_PRODUCTION_DATE", f"{path}.production_date", "Production date must use YYYY-MM-DD.")
         else:
             try:
-                parsed_date = datetime.strptime(production_date, "%d-%m-%Y").date()
+                parsed_date = datetime.strptime(production_date, "%Y-%m-%d").date()
             except ValueError:
-                result.add_error("INVALID_PRODUCTION_DATE", f"{path}.production_date", "Production date must be a real DD-MM-YYYY date.")
+                result.add_error("INVALID_PRODUCTION_DATE", f"{path}.production_date", "Production date must be a real YYYY-MM-DD date.")
         if self.expected_production_date and production_date != self.expected_production_date:
             result.add_error("UNEXPECTED_PRODUCTION_DATE", f"{path}.production_date", f"Expected {self.expected_production_date!r}, received {production_date!r}.")
         edition_code = production.get("edition_code")
-        if not isinstance(edition_code, str) or not EDITION_CODE_PATTERN.fullmatch(edition_code):
-            result.add_error("INVALID_EDITION_CODE", f"{path}.edition_code", "Edition code must use TUI-YYMMDD format.")
-        if parsed_date is not None and isinstance(edition_code, str):
-            expected_code = "TUI-" + parsed_date.strftime("%y%m%d")
-            if edition_code != expected_code:
-                result.add_error("EDITION_DATE_MISMATCH", f"{path}.edition_code", f"Expected {expected_code!r}, received {edition_code!r}.")
+        if not self._is_string(edition_code):
+            result.add_error("INVALID_EDITION_CODE", f"{path}.edition_code", "edition_code must be a non-empty string.")
         total_issues = production.get("total_issues")
         if not isinstance(total_issues, int) or isinstance(total_issues, bool) or not MIN_ISSUES <= total_issues <= MAX_ISSUES:
             result.add_error("INVALID_TOTAL_ISSUES", f"{path}.total_issues", f"total_issues must be an integer from {MIN_ISSUES} to {MAX_ISSUES}.")
@@ -336,7 +341,7 @@ class ProductionValidator:
         for item in gs_papers:
             if item not in VALID_GS_PAPERS:
                 result.add_error("INVALID_GS_PAPER", f"{path}.gs_papers", f"Unsupported GS paper: {item!r}.")
-        self._string(metadata.get("syllabus_topic"), f"{path}.syllabus_topic", result)
+        self._string_list(metadata.get("syllabus_tags"), f"{path}.syllabus_tags", result)
         rating = metadata.get("rating")
         if not isinstance(rating, (int, float)) or isinstance(rating, bool) or not MIN_RATING <= float(rating) <= MAX_RATING:
             result.add_error("INVALID_RATING", f"{path}.rating", f"rating must be between {MIN_RATING} and {MAX_RATING}.")
@@ -346,9 +351,15 @@ class ProductionValidator:
     def _validate_issue_id_consistency(self, metadata: dict[str, Any], path: str, result: ValidationResult) -> None:
         issue_id = metadata.get("issue_id")
         number = metadata.get("issue_number")
-        edition_code = result.edition_code
-        if isinstance(issue_id, str) and isinstance(number, int) and isinstance(edition_code, str):
-            expected = f"{edition_code}-{number:03d}"
+        production_date = result.production_date
+        parsed_date = None
+        if isinstance(production_date, str):
+            try:
+                parsed_date = datetime.strptime(production_date, "%Y-%m-%d").date()
+            except ValueError:
+                parsed_date = None
+        if isinstance(issue_id, str) and isinstance(number, int) and parsed_date is not None:
+            expected = f"TUI-{parsed_date.strftime('%y%m%d')}-{number:03d}"
             if issue_id != expected:
                 result.add_error("ISSUE_ID_MISMATCH", f"{path}.issue_id", f"Expected {expected!r}, received {issue_id!r}.")
 
@@ -427,7 +438,7 @@ class ProductionValidator:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate a Version 3.1 DAILY_INPUT.json file.")
     parser.add_argument("json_file", type=Path, help="Path to DAILY_INPUT.json")
-    parser.add_argument("--date", dest="production_date", help="Expected date in DD-MM-YYYY format.")
+    parser.add_argument("--date", dest="production_date", help="Expected date in YYYY-MM-DD or DD-MM-YYYY format.")
     parser.add_argument("--save-session-reports", action="store_true")
     args = parser.parse_args()
 
@@ -439,7 +450,10 @@ if __name__ == "__main__":
         report_date = args.production_date or validation_result.production_date
         if not report_date:
             raise SystemExit("Cannot determine production date for report output.")
-        parsed_date = datetime.strptime(report_date, "%d-%m-%Y").date()
+        try:
+            parsed_date = datetime.strptime(report_date, "%Y-%m-%d").date()
+        except ValueError:
+            parsed_date = datetime.strptime(report_date, "%d-%m-%Y").date()
         report_paths = ProductionPaths.for_date(parsed_date.isoformat())
         report_paths.create_directories()
         validator.save_reports(
